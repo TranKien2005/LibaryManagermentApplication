@@ -35,7 +35,37 @@ public class ApiClient {
                 .header("Accept", "application/json")
                 .build();
         return http.sendAsync(req, BodyHandlers.ofString())
-                .thenApply(resp -> gson.fromJson(resp.body(), typeOfT));
+                .thenApply(resp -> {
+                    String raw = resp.body();
+                    // parse envelope first
+                    Type envType = com.google.gson.reflect.TypeToken.getParameterized(ApiEnvelope.class, typeOfT).getType();
+                    ApiEnvelope<T> env = gson.fromJson(raw, envType);
+                    if (env == null) throw new ApiException("Empty response from server");
+                    if (!env.success) throw new ApiException(env.message != null ? env.message : "API error");
+                    return env.data;
+                })
+                .whenComplete((ignored, ex) -> {
+                    // reference ignored to satisfy linter (no-op)
+                    if (ignored == null) {
+                        // no-op
+                    }
+                    if (ex == null) return;
+                    Throwable cause = ex instanceof java.util.concurrent.CompletionException ? ex.getCause() : ex;
+                    // convert only network errors; preserve ApiException thrown by thenApply
+                    if (cause instanceof java.net.http.HttpTimeoutException) {
+                        throw new ApiException("Yêu cầu đã hết thời gian chờ (timeout)");
+                    } else if (cause instanceof java.net.ConnectException || cause instanceof java.net.UnknownHostException) {
+                        throw new ApiException("Không thể kết nối tới server");
+                    } else if (cause instanceof ApiException) {
+                        // rethrow original ApiException so caller sees server message
+                        throw (ApiException) cause;
+                    }
+                    // not a network error nor ApiException -> rethrow cause
+                    if (cause instanceof RuntimeException) {
+                        throw (RuntimeException) cause;
+                    }
+                    throw new RuntimeException(cause);
+                });
     }
 
     public <T> CompletableFuture<T> postAsync(String url, Object body, Class<T> respClass) {
@@ -48,7 +78,31 @@ public class ApiClient {
                 .header("Accept", "application/json")
                 .build();
         return http.sendAsync(req, BodyHandlers.ofString())
-                .thenApply(resp -> gson.fromJson(resp.body(), respClass));
+                .thenApply(resp -> {
+                    String raw = resp.body();
+                    ApiEnvelope<T> env = gson.fromJson(raw, com.google.gson.reflect.TypeToken.getParameterized(ApiEnvelope.class, respClass).getType());
+                    if (env == null) throw new ApiException("Empty response from server");
+                    if (!env.success) throw new ApiException(env.message != null ? env.message : "API error");
+                    return env.data;
+                })
+                .whenComplete((ignored, ex) -> {
+                    if (ignored == null) {
+                        // no-op
+                    }
+                    if (ex == null) return;
+                    Throwable cause = ex instanceof java.util.concurrent.CompletionException ? ex.getCause() : ex;
+                    if (cause instanceof java.net.http.HttpTimeoutException) {
+                        throw new ApiException("Yêu cầu đã hết thời gian chờ (timeout)");
+                    } else if (cause instanceof java.net.ConnectException || cause instanceof java.net.UnknownHostException) {
+                        throw new ApiException("Không thể kết nối tới server");
+                    } else if (cause instanceof ApiException) {
+                        throw (ApiException) cause;
+                    }
+                    if (cause instanceof RuntimeException) {
+                        throw (RuntimeException) cause;
+                    }
+                    throw new RuntimeException(cause);
+                });
     }
 
     public <T> CompletableFuture<T> putAsync(String url, Object body, Class<T> respClass) {
@@ -61,7 +115,31 @@ public class ApiClient {
                 .header("Accept", "application/json")
                 .build();
         return http.sendAsync(req, BodyHandlers.ofString())
-                .thenApply(resp -> gson.fromJson(resp.body(), respClass));
+                .thenApply(resp -> {
+                    String raw = resp.body();
+                    ApiEnvelope<T> env = gson.fromJson(raw, com.google.gson.reflect.TypeToken.getParameterized(ApiEnvelope.class, respClass).getType());
+                    if (env == null) throw new ApiException("Empty response from server");
+                    if (!env.success) throw new ApiException(env.message != null ? env.message : "API error");
+                    return env.data;
+                })
+                .whenComplete((ignored, ex) -> {
+                    if (ignored == null) {
+                        // no-op
+                    }
+                    if (ex == null) return;
+                    Throwable cause = ex instanceof java.util.concurrent.CompletionException ? ex.getCause() : ex;
+                    if (cause instanceof java.net.http.HttpTimeoutException) {
+                        throw new ApiException("Yêu cầu đã hết thời gian chờ (timeout)");
+                    } else if (cause instanceof java.net.ConnectException || cause instanceof java.net.UnknownHostException) {
+                        throw new ApiException("Không thể kết nối tới server");
+                    } else if (cause instanceof ApiException) {
+                        throw (ApiException) cause;
+                    }
+                    if (cause instanceof RuntimeException) {
+                        throw (RuntimeException) cause;
+                    }
+                    throw new RuntimeException(cause);
+                });
     }
 
     public CompletableFuture<Void> deleteAsync(String url) {
@@ -70,6 +148,34 @@ public class ApiClient {
                 .timeout(timeout)
                 .DELETE()
                 .build();
-        return http.sendAsync(req, BodyHandlers.discarding()).thenApply(resp -> { resp.toString(); return null; });
+                return http.sendAsync(req, BodyHandlers.ofString()).thenApply(resp -> {
+                        String raw = resp.body();
+                        ApiEnvelope<Void> env = gson.fromJson(raw, com.google.gson.reflect.TypeToken.getParameterized(ApiEnvelope.class, Void.class).getType());
+                        if (env == null) throw new ApiException("Empty response from server");
+                        if (!env.success) throw new ApiException(env.message != null ? env.message : "API error");
+                        return null;
+                }).whenComplete((ignored, ex) -> {
+                    if (ignored == null) {
+                        // no-op
+                    }
+                    if (ex == null) return;
+                    Throwable cause = ex instanceof java.util.concurrent.CompletionException ? ex.getCause() : ex;
+                    if (cause instanceof java.net.http.HttpTimeoutException) {
+                        throw new ApiException("Yêu cầu đã hết thời gian chờ (timeout)");
+                    } else if (cause instanceof java.net.ConnectException || cause instanceof java.net.UnknownHostException) {
+                        throw new ApiException("Không thể kết nối tới server");
+                    } else if (cause instanceof ApiException) {
+                        throw (ApiException) cause;
+                    }
+                    if (cause instanceof RuntimeException) {
+                        throw (RuntimeException) cause;
+                    }
+                    throw new RuntimeException(cause);
+                }).thenApply(ApiClient::returnNull);
+    }
+
+    // helper to map any object to null for CompletableFuture<Void> results
+    private static Void returnNull(Object o) {
+        return null;
     }
 }
