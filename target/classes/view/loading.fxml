@@ -1,8 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 
-<?import javafx.scene.control.ProgressIndicator?>
-<?import javafx.scene.layout.StackPane?>
-
-<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="Controller.LoadingController">
-    <ProgressIndicator fx:id="progressIndicator" />
+<StackPane xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" 
+           prefWidth="1000" prefHeight="600" styleClass="bg-dark text-light"
+           fx:controller="Controller.LoadingController">
+    <HBox spacing="20" maxWidth="Infinity" maxHeight="Infinity" prefWidth="1000" prefHeight="600" id="stackCenter">
+        <VBox spacing="20" prefWidth="1000" alignment="CENTER">
+            <ImageView fitWidth="150" fitHeight="150" preserveRatio="true">
+            <Image url="@/images/login/logo.png"/>
+            </ImageView>
+            <ProgressIndicator fx:id="progressIndicator" prefWidth="60" prefHeight="60" />
+            <Label fx:id="message" text="Đang xử lý, xin chờ giây lát..." styleClass="text-light" wrapText="true" textAlignment="CENTER"/>
+        </VBox></HBox>
 </StackPane>

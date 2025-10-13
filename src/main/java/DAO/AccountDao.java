@@ -9,7 +9,7 @@ import java.util.concurrent.Future;
 import model.Account;
 import util.*;
 
-public class AccountDao {
+public class AccountDao implements BaseDao<model.Account, Integer> {
     private static AccountDao instance;
 
     private AccountDao() {
@@ -66,7 +66,7 @@ public class AccountDao {
         }
     }
 
-    public void update(Account account, int id) throws SQLException {
+    public void update(Account account, Integer id) throws SQLException {
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
             // Check if the current username and account type match the existing record
             String checkQuery = "SELECT * FROM Account WHERE AccountID = ?";
@@ -98,7 +98,7 @@ public class AccountDao {
         }
     }
 
-    public void delete(int id) throws SQLException {
+    public void delete(Integer id) throws SQLException {
         String query = "DELETE FROM Account WHERE AccountID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -109,7 +109,7 @@ public class AccountDao {
         }
     }
 
-    public Account get(int id) throws SQLException {
+    public Account get(Integer id) throws SQLException {
         String query = "SELECT * FROM Account WHERE AccountID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -177,7 +177,7 @@ public class AccountDao {
         return ids;
     }
 
-    public int getID(Account account) throws SQLException {
+    public Integer getID(Account account) throws SQLException {
         String query = "SELECT AccountID FROM Account WHERE Username = ? AND Password = ? AND AccountType = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {

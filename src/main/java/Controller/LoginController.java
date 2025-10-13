@@ -1,10 +1,9 @@
 package Controller;
 
 import java.io.IOException;
-import java.sql.SQLException;
-
-import DAO.AccountDao;
 import model.Account;
+import service.auth.AuthService;
+import service.ServiceFactory;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -31,95 +30,39 @@ public class LoginController {
     @FXML
     protected Button loginButton;
 
-    @SuppressWarnings("static-access")
+    private static final String DEFAULT_BASE_URL = "http://localhost:8080"; // TODO: centralize
+
+    @FXML
+    public void initialize() {
+        // ensure app cache is fresh when showing login screen
+        service.AppCache.getInstance().clear();
+    }
+
     @FXML
     protected void handleLogin() {
         String username = usernameField.getText();
         String password = passwordField.getText();
+        AuthService authService = ServiceFactory.getAuthService(DEFAULT_BASE_URL);
 
-        AccountDao accountDao = AccountDao.getInstance();
-        Account account;
-        try {
-            account = accountDao.getByUsername(username);
-            if (account == null || !account.getPassword().equals(password)) {
-                throw new Exception("Invalid username or password");
+        // capture the current stage immediately (before we swap scenes) so we can close it later
+        final Stage capturedStage = (Stage) loginButton.getScene().getWindow();
+
+    authService.authenticate(username, password).thenAccept(account -> {
+            if (account == null) {
+                Platform.runLater(() -> ErrorDialog.showError("Login Error", "Invalid username or password", null));
+                return;
             }
-            // Show loading stage in the current stage
-            Stage currentStage = (Stage) loginButton.getScene().getWindow();
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/loading.fxml"));
-
-            Parent root = loader.load();
-            Scene scene = new Scene(root);
-            currentStage.setScene(scene);
-            currentStage.setTitle("Loading");
-            currentStage.show();
-
-            // Run login process in a new thread using ThreadManager
-            util.ThreadManager.execute(() -> {
-
-                // Simulate login processing time
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                Platform.runLater(() -> {
-                    try {
-
-                        String fxmlFile = account.getAccountType().equals("User") ? "../view/menuUser.fxml"
-                                : "../view/menu.fxml";
-                        FXMLLoader mainLoader = new FXMLLoader(getClass().getResource(fxmlFile));
-
-                        int accountId = account.getAccountID();
-                        if (account.getAccountType().equals("User")) {
-                            menuUserController userLoader = new menuUserController();
-                            userLoader.setAccountID(accountId);
-                            mainLoader.setController(userLoader);
-                        } else {
-                            menuController menuLoader = new menuController();
-                            menuLoader.setAccountID(accountId);
-                            mainLoader.setController(menuLoader);
-                        }
-                        Parent mainRoot = mainLoader.load();
-                        Scene mainScene = new Scene(mainRoot);
-                        Stage mainStage = new Stage();
-                        mainStage.setScene(mainScene);
-                        mainStage.setTitle("Menu");
-                        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-                        mainStage.setX((screenBounds.getWidth() - 1500) / 2);
-                        mainStage.setY((screenBounds.getHeight() - 800) / 2);
-                        mainStage.setWidth(1500);
-                        mainStage.setHeight(800);
-                        mainStage.setResizable(false);
-                        // Sử dụng đường dẫn tuyệt đối cho tệp hình ảnh
-                        Image icon = new Image(getClass().getResourceAsStream("/images/login/logo.png"));
-                        if (icon.isError()) {
-                            System.err.println("Error: Image file not found!");
-                            return;
-                        }
-                        mainStage.getIcons().add(icon);
-
-                        currentStage.close();
-                        mainStage.show();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        ErrorDialog.showError("Error", e.getMessage(), currentStage);
-                    }
-                });
-
-            });
-
-        } catch (SQLException e) {
-            System.err.println("SQL Error: " + e.getMessage());
-            e.printStackTrace();
-            util.ErrorDialog.showError("Database Error", e.getMessage(), null);
-        } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
-            e.printStackTrace();
-            util.ErrorDialog.showError("Login Error", e.getMessage(), null);
-        }
-
+            // show loading UI on captured stage
+            // show loading UI and proceed to menu
+            // clear entire cache and then set current account
+            service.AppCache.getInstance().clear();
+            service.AppCache.getInstance().setCurrentAccount(account);
+            showLoadingAndOpenMenu(account, capturedStage);
+        }).exceptionally(ex -> {
+            ex.printStackTrace();
+            Platform.runLater(() -> ErrorDialog.showError("Login Error", ex.getMessage(), null));
+            return null;
+        });
     }
 
     @FXML
@@ -138,90 +81,79 @@ public class LoginController {
 
         } catch (IOException e) {
             System.err.println("Error loading register.fxml: " + e.getMessage());
-            util.ErrorDialog.showError("Register Error", e.getMessage(), null);
+            ErrorDialog.showError("Register Error", e.getMessage(), null);
             e.printStackTrace();
         }
     }
 
-    @SuppressWarnings("static-access")
-    private void loginByAccountId(int accountId) {
-        AccountDao accountDao = AccountDao.getInstance();
-        Account account;
+    private void openMenuForAccount(Account account, Stage currentStage) {
         try {
-            account = accountDao.get(accountId);
-            if (account == null) {
-                throw new Exception("Account not found");
+            String fxmlFile = account.getAccountType().equals("User") ? "../view/menuUser.fxml" : "../view/menu.fxml";
+            FXMLLoader mainLoader = new FXMLLoader(getClass().getResource(fxmlFile));
+
+            int accountId = account.getAccountID();
+            if (account.getAccountType().equals("User")) {
+                menuUserController.setAccountID(accountId);
+                menuUserController userLoader = menuUserController.getInstance();
+                mainLoader.setController(userLoader);
+            } else {
+                menuController.setAccountID(accountId);
+                menuController menuLoader = menuController.getInstance();
+                mainLoader.setController(menuLoader);
             }
 
-            Stage currentStage = (Stage) loginButton.getScene().getWindow();
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/loading.fxml"));
+            Parent mainRoot = mainLoader.load();
+            Scene mainScene = new Scene(mainRoot);
+            Stage mainStage = new Stage();
+            mainStage.setScene(mainScene);
+            mainStage.setTitle("Menu");
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+            mainStage.setX((screenBounds.getWidth() - 1500) / 2);
+            mainStage.setY((screenBounds.getHeight() - 800) / 2);
+            mainStage.setWidth(1500);
+            mainStage.setHeight(800);
+            mainStage.setResizable(false);
+            Image icon = new Image(getClass().getResourceAsStream("/images/login/logo.png"));
+            if (icon.isError()) {
+                System.err.println("Error: Image file not found!");
+                return;
+            }
+            mainStage.getIcons().add(icon);
 
-            Parent root = loader.load();
-            Scene scene = new Scene(root);
-            currentStage.setScene(scene);
-            currentStage.setTitle("Loading");
-            currentStage.show();
-
-            // Run login process in a new thread using ThreadManager
-            util.ThreadManager.execute(() -> {
-
-                // Simulate login processing time
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                Platform.runLater(() -> {
-                    try {
-
-                        String fxmlFile = account.getAccountType().equals("User") ? "../view/menuUser.fxml"
-                                : "../view/menu.fxml";
-                        FXMLLoader mainLoader = new FXMLLoader(getClass().getResource(fxmlFile));
-
-                        if (account.getAccountType().equals("User")) {
-                            menuUserController userLoader = new menuUserController();
-                            userLoader.setAccountID(accountId);
-                            mainLoader.setController(userLoader);
-                        } else {
-                            menuController menuLoader = new menuController();
-                            menuLoader.setAccountID(accountId);
-                            mainLoader.setController(menuLoader);
-                        }
-                        Parent mainRoot = mainLoader.load();
-                        Scene mainScene = new Scene(mainRoot);
-                        Stage mainStage = new Stage();
-                        mainStage.setScene(mainScene);
-                        mainStage.setTitle("Menu");
-                        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-                        mainStage.setX((screenBounds.getWidth() - 1500) / 2);
-                        mainStage.setY((screenBounds.getHeight() - 800) / 2);
-                        mainStage.setWidth(1500);
-                        mainStage.setHeight(800);
-                        mainStage.setResizable(false);
-                        // Sử dụng đường dẫn tuyệt đối cho tệp hình ảnh
-                        Image icon = new Image(getClass().getResourceAsStream("/images/login/logo.png"));
-                        if (icon.isError()) {
-                            System.err.println("Error: Image file not found!");
-                            return;
-                        }
-                        mainStage.getIcons().add(icon);
-
-                        currentStage.close();
-                        mainStage.show();
-                    } catch (IOException e) {
-                        throw new RuntimeException("Error loading menu.fxml: " + e.getMessage());
-                    }
-
-                });
-            });
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Database Error: " + e.getMessage());
-        } catch (Exception e) {
-            throw new RuntimeException("Login Error: " + e.getMessage());
+            if (currentStage != null) {
+                currentStage.close();
+            }
+            mainStage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            ErrorDialog.showError("Error", e.getMessage(), null);
         }
     }
+
+    /**
+     * Show the loading view on the given stage and, after a short delay,
+     * open the main menu for the provided account.
+     */
+    private void showLoadingAndOpenMenu(Account account, Stage stageToReplace) {
+        Platform.runLater(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/loading.fxml"));
+                Parent root = loader.load();
+                Scene scene = new Scene(root);
+                stageToReplace.setScene(scene);
+                stageToReplace.setTitle("Loading");
+                stageToReplace.show();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+        util.ThreadManager.execute(() -> {
+            try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+            Platform.runLater(() -> openMenuForAccount(account, stageToReplace));
+        });
+    }
+
 
     private boolean loginInProgress = false;
     public QRScanner qrScanner = QRScanner.getInstance();
@@ -259,8 +191,26 @@ public class LoginController {
                         int accountId = Integer.parseInt(qrCodeText.substring("accountID:".length()).trim());
                         loginInProgress = true;
                         qrScanner.stopQRScanner();
-                        loginByAccountId(accountId);
-                        loginInProgress = false;
+                        AuthService authService = ServiceFactory.getAuthService(DEFAULT_BASE_URL);
+                        final Stage capturedStage = (Stage) loginButton.getScene().getWindow();
+                        authService.authenticateByAccountId(accountId).thenAccept(account -> {
+                            if (account == null) {
+                                Platform.runLater(() -> ErrorDialog.showError("Login Error", "Account not found", null));
+                                loginInProgress = false;
+                                return;
+                            }
+                            // clear entire cache and then set current account
+                            service.AppCache.getInstance().clear();
+                            service.AppCache.getInstance().setCurrentAccount(account);
+                            // show loading UI and proceed to menu
+                            showLoadingAndOpenMenu(account, capturedStage);
+                            loginInProgress = false;
+                        }).exceptionally(ex -> {
+                            ex.printStackTrace();
+                            Platform.runLater(() -> ErrorDialog.showError("Login Error", ex.getMessage(), null));
+                            loginInProgress = false;
+                            return null;
+                        });
 
                     } catch (NumberFormatException e) {
                         ErrorDialog.showError("QR Code Error", "Invalid account ID", null);

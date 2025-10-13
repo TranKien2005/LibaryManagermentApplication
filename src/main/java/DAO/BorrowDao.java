@@ -9,7 +9,7 @@ import java.util.concurrent.Future;
 import model.Borrow;
 import util.ThreadManager;
 
-public class BorrowDao {
+public class BorrowDao implements BaseDao<model.Borrow, Integer> {
     private static BorrowDao instance;
 
     private BorrowDao() {
@@ -69,7 +69,7 @@ public class BorrowDao {
         }
     }
 
-    public void update(Borrow borrow, int id) throws SQLException {
+    public void update(Borrow borrow, Integer id) throws SQLException {
         String query = "UPDATE Borrow SET AccountID = ?, BookID = ?, BorrowDate = ?, ExpectedReturnDate = ?, Status = ? WHERE BorrowID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -85,7 +85,7 @@ public class BorrowDao {
         }
     }
 
-    public void delete(int id) throws SQLException {
+    public void delete(Integer id) throws SQLException {
         String query = "DELETE FROM Borrow WHERE BorrowID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -96,7 +96,7 @@ public class BorrowDao {
         }
     }
 
-    public Borrow get(int id) throws SQLException {
+    public Borrow get(Integer id) throws SQLException {
         String query = "SELECT * FROM Borrow WHERE BorrowID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -118,7 +118,7 @@ public class BorrowDao {
         return null;
     }
 
-    public int getID(Borrow borrow) throws SQLException {
+    public Integer getID(Borrow borrow) throws SQLException {
         String query = "SELECT BorrowID FROM Borrow WHERE AccountID = ? AND BookID = ? AND BorrowDate = ? AND ExpectedReturnDate = ? AND Status = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {

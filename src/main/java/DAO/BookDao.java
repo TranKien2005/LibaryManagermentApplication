@@ -17,7 +17,7 @@ import java.util.concurrent.Future;
 import model.Document;
 import util.ThreadManager;
 
-public final class BookDao {
+public final class BookDao implements BaseDao<Document, Integer> {
     private static BookDao instance;
 
     private BookDao() {
@@ -87,7 +87,7 @@ public final class BookDao {
         }
     }
 
-    public int getID(Document document) throws SQLException {
+    public Integer getID(Document document) throws SQLException {
         String query = "SELECT ID FROM Book WHERE Title = ? AND Author = ? AND Category = ? AND Publisher = ? AND YearPublished = ? AND AvailableCopies = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -108,7 +108,7 @@ public final class BookDao {
         return -1;
     }
 
-    public void update(Document document, int id) throws SQLException {
+    public void update(Document document, Integer id) throws SQLException {
         String query = "UPDATE Book SET Title = ?, Author = ?, Category = ?, Publisher = ?, YearPublished = ?, AvailableCopies = ? WHERE ID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -125,7 +125,7 @@ public final class BookDao {
         }
     }
 
-    public void delete(int id) throws SQLException {
+    public void delete(Integer id) throws SQLException {
         String query = "DELETE FROM Book WHERE ID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -136,7 +136,7 @@ public final class BookDao {
         }
     }
 
-    public Document get(int id) throws SQLException {
+    public Document get(Integer id) throws SQLException {
         String query = "SELECT * FROM Book WHERE ID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
