@@ -16,7 +16,7 @@ import javafx.stage.Stage;
 import model.Document;
 import util.ErrorDialog;
 import java.io.IOException;
-import java.io.InputStream;
+// removed unused InputStream import
 import java.sql.SQLException;
 import java.util.List;
 
@@ -91,19 +91,19 @@ public class HomeController {
 
             fpTopBooks.getChildren().clear();
             for (Document book : topBooks) {
-                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImage(), book.getRating(), book);
+                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
                 fpTopBooks.getChildren().add(bookItem);
             }
 
             fpRecommendedBooks.getChildren().clear();
             for (Document book : favoriteBooks) {
-                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImage(), book.getRating(), book);
+                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
                 fpRecommendedBooks.getChildren().add(bookItem);
             }
 
             fpTrendingBooks.getChildren().clear();
             for (Document book : trendingBooks) {
-                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImage(), book.getRating(), book);
+                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
                 fpTrendingBooks.getChildren().add(bookItem);
             }
 
@@ -198,9 +198,9 @@ public class HomeController {
             throw new SQLException("No more search results to load.");
         }
         fpNewArrivals.getChildren().clear();
-        for (Document book : searchResults) {
+            for (Document book : searchResults) {
 
-            VBox bookItem = createBookItem(book.getTitle(), book.getCoverImage(), book.getRating(), book);
+            VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
             fpNewArrivals.getChildren().add(bookItem);
         }
     }
@@ -212,23 +212,24 @@ public class HomeController {
         }
         fpNewArrivals.getChildren().clear();
         for (Document book : newArrivals) {
-            VBox bookItem = createBookItem(book.getTitle(), book.getCoverImage(), book.getRating(), book);
+            VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
             fpNewArrivals.getChildren().add(bookItem);
         }
     }
-
-    private VBox createBookItem(String title, InputStream coverImageStream, double rating, Document book) {
+    private VBox createBookItem(String title, String coverImageUrl, double rating, Document book) {
         VBox vBox = new VBox(10);
         vBox.getStyleClass().add("book-item");
         ImageView imageView = new ImageView();
-        if (coverImageStream != null) {
-            Image image = new Image(coverImageStream);
-            imageView.setImage(image);
+        if (coverImageUrl != null && !coverImageUrl.isBlank()) {
             try {
-                coverImageStream.reset();
-            } catch (IOException e) {
-                e.printStackTrace();
-                ErrorDialog.showError("Lỗi", "Không thể tải ảnh bìa sách.", (Stage) tfSearch.getScene().getWindow());
+                Image image = new Image(coverImageUrl, 100, 150, true, true, true);
+                image.errorProperty().addListener((_obs, _old, isErr) -> {
+                    if (_obs == null && _old == null) { /* no-op to avoid unused vars */ }
+                    if (isErr) imageView.setImage(new Image("/images/menu/coverArtUnknown.png"));
+                });
+                imageView.setImage(image);
+            } catch (Exception e) {
+                imageView.setImage(new Image("/images/menu/coverArtUnknown.png"));
             }
         } else {
             Image image = new Image("/images/menu/coverArtUnknown.png");

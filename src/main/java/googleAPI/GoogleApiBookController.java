@@ -172,11 +172,8 @@ public class GoogleApiBookController {
                 document.setDescription(description);
                 document.setRating(averageRating);
                 document.setReviewCount(ratingsCount);
-                try {
-                    document.setCoverImageByUrl(imageUrl);
-                } catch (IOException e) {
-                    document.setCoverImageByUrl(null);
-                }
+                // store the image URL instead of fetching the stream
+                document.setCoverImageUrl(imageUrl != null && !"No image available".equals(imageUrl) ? imageUrl : null);
                 return document;
             } else {
                 throw new Exception("No book information found for the provided ISBN.");

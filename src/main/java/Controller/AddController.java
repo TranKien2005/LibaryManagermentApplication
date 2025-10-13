@@ -168,8 +168,9 @@ public class AddController extends menuController {
                         existingDocument.setDescription(document.getDescription());
                         updated = true;
                     }
-                    if (existingDocument.getCoverImage() == null || existingDocument.getCoverImage() == null) {
-                        existingDocument.setCoverImage(document.getCoverImage());
+                    if ((existingDocument.getCoverImageUrl() == null || existingDocument.getCoverImageUrl().isBlank())
+                            && document.getCoverImageUrl() != null && !document.getCoverImageUrl().isBlank()) {
+                        existingDocument.setCoverImageUrl(document.getCoverImageUrl());
                         updated = true;
                     }
                     if (existingDocument.getRating() == 0) {

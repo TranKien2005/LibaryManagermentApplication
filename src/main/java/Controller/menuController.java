@@ -1,7 +1,7 @@
 package Controller;
 
-import java.io.File;
-import java.io.InputStream;
+// File no longer used in this controller (change cover temporarily disabled)
+// InputStream no longer used; images handled via URLs
 import java.sql.SQLException;
 
 import javafx.scene.control.Label;
@@ -39,7 +39,7 @@ import javafx.scene.Parent;
 import java.io.IOException;
 
 import googleAPI.*;
-import javafx.stage.FileChooser;
+// FileChooser import removed; change-cover flow is disabled
 
 public class menuController {
     private static menuController instance;
@@ -237,20 +237,19 @@ public class menuController {
             bookCoverImageView.setImage(null);
             if (newSelection != null) {
 
-                InputStream imageStream = newSelection.getCoverImage();
+                String imageUrl = newSelection.getCoverImageUrl();
 
                 reviewTextArea.setText(newSelection.getDescription());
                 scoreLabel.setText(String.valueOf(newSelection.getRating()));
                 reviewCountLabel.setText(String.valueOf(newSelection.getReviewCount()));
-                if (imageStream != null) {
-                    Image image = new Image(imageStream);
+                if (imageUrl != null && !imageUrl.isBlank()) {
                     try {
-                        imageStream.reset();
-                    } catch (IOException e) {
+                        Image image = new Image(imageUrl, 120, 180, true, true, true);
+                        bookCoverImageView.setImage(image);
+                    } catch (Exception e) {
                         e.printStackTrace();
+                        bookCoverImageView.setImage(defaulImage);
                     }
-                    bookCoverImageView.setImage(image);
-
                 } else {
                     bookCoverImageView.setImage(defaulImage);
                 }
@@ -524,6 +523,14 @@ public class menuController {
 
     @FXML
     private void handleChangeCover() {
+        // Temporarily disabled: storing local files as cover images is not supported.
+        // Keep the old file-picker code commented for a future migration if needed.
+        util.ErrorDialog.showError("Tính năng tạm thời không khả dụng",
+                "Hiện không thể thay đổi ảnh bìa từ máy. Vui lòng sử dụng URL ảnh (Google Books hoặc link trực tuyến) khi thêm/sửa sách.",
+                (Stage) tvDocuments.getScene().getWindow());
+        return;
+
+        /*
         // Mở cửa sổ chọn tệp
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Chọn ảnh bìa sách");
@@ -537,10 +544,11 @@ public class menuController {
         File selectedFile = fileChooser.showOpenDialog(stage);
         if (selectedFile != null) {
             try {
-                // Gọi phương thức setBookImage để cập nhật ảnh bìa cho sách
+                // Gọi phương thức setBookImageUrl để lưu URL (file://...) vào DB
                 BookDao bookDao = BookDao.getInstance();
                 int bookId = tvDocuments.getSelectionModel().getSelectedItem().getBookID();
-                bookDao.setBookImage(bookId, selectedFile.getAbsolutePath());
+                String fileUrl = selectedFile.toURI().toString();
+                bookDao.setBookImageUrl(bookId, fileUrl);
                 util.ErrorDialog.showSuccess("Thành công", "Ảnh bìa đã được thay đổi thành công.",
                         (Stage) tvDocuments.getScene().getWindow());
                 handleReload();
@@ -553,7 +561,7 @@ public class menuController {
         } else {
             ErrorDialog.showError("Filee Error", "Error load file", "select another file", null);
         }
-
+        */
     }
 
     @FXML

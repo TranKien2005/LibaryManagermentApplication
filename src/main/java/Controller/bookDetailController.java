@@ -1,8 +1,11 @@
 package Controller;
 
 import java.io.File;
-import java.io.IOException;
+// java.io.IOException intentionally unused after refactor but kept for clarity
+// (no direct usage required)
 import java.io.InputStream;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import java.sql.SQLException;
 import java.time.LocalDate;
 
@@ -100,7 +103,7 @@ public class bookDetailController {
     private void updateBookDetails() {
         // Cập nhật ảnh bìa
         accountID = menuUserController.getAccountID();
-        InputStream coverImageStream = book.getCoverImage();
+        String coverImageUrl = book.getCoverImageUrl();
         try {
             InputStream qrCodeStream = CreateQRCode.generateQRCode("BookID: " + book.getBookID());
             qrCodeImageView.setImage(new Image(qrCodeStream));
@@ -108,17 +111,24 @@ public class bookDetailController {
             e.printStackTrace();
             util.ErrorDialog.showError("Error", "Có lỗi xảy ra khi tạo mã QR.", null);
         }
-        if (coverImageStream != null) {
-            Image image = new Image(coverImageStream);
+        if (coverImageUrl != null && !coverImageUrl.isBlank()) {
             try {
-                coverImageStream.reset();
-            } catch (IOException e) {
+                Image image = new Image(coverImageUrl, 200, 300, true, true, true);
+                image.errorProperty().addListener(new ChangeListener<Boolean>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Boolean> obs, Boolean oldVal, Boolean newVal) {
+                        if (newVal != null && newVal) {
+                            coverImageView.setImage(new Image("/images/menu/coverArtUnknown.png"));
+                        }
+                    }
+                });
+                coverImageView.setImage(image);
+            } catch (Exception e) {
                 e.printStackTrace();
+                coverImageView.setImage(new Image("/images/menu/coverArtUnknown.png"));
             }
-            coverImageView.setImage(image);
         } else {
-            Image image = new Image("/images/menu/coverArtUnknown.png");
-            coverImageView.setImage(image);
+            coverImageView.setImage(new Image("/images/menu/coverArtUnknown.png"));
         }
 
         // Cập nhật thông tin cơ bản
