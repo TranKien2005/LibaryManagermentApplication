@@ -8,6 +8,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.concurrent.CompletableFuture;
 
 import javax.imageio.ImageIO;
 
@@ -25,10 +26,15 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
+import javafx.application.Platform;
 import model.Borrow;
 import model.Document;
 import model.Return;
 import util.ErrorDialog;
+import data.DefaultAppContainer;
+import data.BorrowReturnRepository;
+import data.ReturnRepository;
+import data.BorrowRepository;
 
 public class bookDetailController {
 
@@ -82,6 +88,10 @@ public class bookDetailController {
     @FXML
     private ImageView qrCodeImageView;
 
+    private static ReturnRepository returnRepository = DefaultAppContainer.getInstance().getReturnRepository();
+    private static BorrowReturnRepository borrowReturnRepository = DefaultAppContainer.getInstance().getBorrowReturnRepository();
+    private static BorrowRepository borrowRepository = DefaultAppContainer.getInstance().getBorrowRepository();
+    private static ReturnRepository returnDao = DefaultAppContainer.getInstance().getReturnRepository();
     private int rating = 0;
 
     int accountID = menuUserController.getAccountID();
@@ -146,6 +156,8 @@ public class bookDetailController {
         updateRatingBox();
     }
 
+
+
     /**
      * Cập nhật đánh giá sao (rating) của sách.
      */
@@ -182,29 +194,22 @@ public class bookDetailController {
             util.ErrorDialog.showError("Thông báo", "Bạn đã mượn sách này rồi.", null);
             return;
         }
-        BorrowDao borrowDAO = BorrowDao.getInstance();
         int selectedMemberId = accountID;
         int selectedDocumentId = book.getBookID();
         LocalDate borrowDate = LocalDate.now();
         LocalDate returnDate = borrowDate.plusMonths(1);
 
-        Borrow newBorrow = new Borrow(
-                selectedMemberId,
-                selectedDocumentId,
-                borrowDate,
-                returnDate,
-                "Borrowed");
-        try {
-            borrowDAO.insert(newBorrow);
-            util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được mượn thành công.", null);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Database Error", e.getMessage(), null);
-        } catch (Exception e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Error", e.getMessage(), null);
-        }
-
+        Borrow borrowRecord = new Borrow(selectedMemberId, selectedDocumentId, borrowDate, returnDate, "Borrowed");
+        borrowRepository.insert(borrowRecord)
+            .thenRun(() -> Platform.runLater(() -> 
+                util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được mượn thành công.", null)))
+            .exceptionally(ex -> {
+                Platform.runLater(() -> {
+                    ex.printStackTrace();
+                    util.ErrorDialog.showError("Database Error", ex.getMessage(), null);
+                });
+                return null;
+            });
     }
 
     /**
@@ -212,29 +217,51 @@ public class bookDetailController {
      */
     @FXML
     private void handleReturn() {
-        int selectedBorrow;
-        selectedBorrow = -1;
-        if (BorrowReturnDAO.getInstance().isBorrowed(accountID, book.getBookID())) {
-            selectedBorrow = BorrowReturnDAO.getInstance().getID(accountID, book.getBookID());
-        } else {
-            util.ErrorDialog.showError("Thông báo", "Bạn chưa mượn sách này", null);
-            return;
-        }
-        try {
-            int damagePercentage = (int) (Math.random() * 100); // Random damage percentage between 0 and 100
-            Return returnRecord = new Return(selectedBorrow,
-                    LocalDate.now(), damagePercentage);
-            ReturnDao.getInstance().insert(returnRecord);
-            util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được trả thành công.", null);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Database Error", e.getMessage(), null);
-        } catch (Exception e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Error", e.getMessage(), null);
-        }
-
+        borrowReturnRepository.isBorrowed(accountID, book.getBookID())
+            .thenCompose(isBorrowed -> {
+                if (isBorrowed) {
+                    return borrowReturnRepository.getID(accountID, book.getBookID());
+                } else {
+                    return CompletableFuture.completedFuture(-1);
+                }
+            })
+            .thenCompose(selectedBorrowId -> {
+                if (selectedBorrowId == -1) {
+                    Platform.runLater(() -> 
+                        util.ErrorDialog.showError("Thông báo", "Bạn chưa mượn sách này", null)
+                    );
+                    return CompletableFuture.completedFuture(-1);
+                } else {
+                    int damagePercentage = (int) (Math.random() * 100); // Random damage percentage between 0 and 100
+                    Return returnRecord = new Return(selectedBorrowId,
+                            LocalDate.now(), damagePercentage);
+                    return returnRepository.insert(returnRecord)
+                        .thenApply(v -> {
+                            Platform.runLater(() -> 
+                                util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được trả thành công.", null)
+                            );
+                            return selectedBorrowId;
+                        })
+                        .exceptionally(ex -> {
+                            Platform.runLater(() -> {
+                                ex.printStackTrace();
+                                util.ErrorDialog.showError("Error", ex.getMessage(), null);
+                            });
+                            return -1;
+                        });
+                }
+            })
+            .exceptionally(ex -> {
+                Platform.runLater(() -> {
+                    ex.printStackTrace();
+                    util.ErrorDialog.showError("Database Error", ex.getMessage(), null);
+                });
+                return -1;
+            });
     }
+
+
+  
 
     @FXML
     private void handleStarClick(ActionEvent event) {
