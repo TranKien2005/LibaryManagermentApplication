@@ -7,6 +7,7 @@ import javafx.beans.value.ObservableValue;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.concurrent.CompletableFuture;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -28,6 +29,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.application.Platform;
 import model.Borrow;
+import model.BorrowReturn;
 import model.Document;
 import model.Return;
 import util.ErrorDialog;
@@ -174,7 +176,7 @@ public class bookDetailController {
 
     @FXML
     private void handleBorrow() {
-        if (borrowReturnRepository.isBorrowed(accountID, book.getBookID())) {
+        if (borrowReturnRepository.isBorrowed(accountID, book.getBookID()).join()) {
             util.ErrorDialog.showError("Thông báo", "Bạn đã mượn sách này rồi.", null);
             return;
         }
@@ -185,9 +187,9 @@ public class bookDetailController {
 
         Borrow borrowRecord = new Borrow(selectedMemberId, selectedDocumentId, borrowDate, returnDate, "Borrowed");
         try {
-            borrowRepository.add(borrowRecord);
+            borrowRepository.insert(borrowRecord).join();
             util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được mượn thành công.", null);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             util.ErrorDialog.showError("Database Error", e.getMessage(), null);
         }
@@ -196,16 +198,41 @@ public class bookDetailController {
     @FXML
     private void handleReturn() {
         try {
-            if (borrowReturnRepository.isBorrowed(accountID, book.getBookID())) {
-                int selectedBorrowId = borrowReturnRepository.getID(accountID, book.getBookID());
-                int damagePercentage = (int) (Math.random() * 100);
-                Return returnRecord = new Return(selectedBorrowId, LocalDate.now(), damagePercentage);
-                returnRepository.add(returnRecord);
-                util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được trả thành công.", null);
+            if (borrowReturnRepository.isBorrowed(accountID, book.getBookID()).join()) {
+                // Get all borrow returns for this account
+                List<BorrowReturn> borrowReturns = borrowReturnRepository.getByAccountId(accountID).join();
+                
+                // Find the one that matches our book ID and is borrowed
+                int selectedBorrowId = -1;
+                for (BorrowReturn br : borrowReturns) {
+                    // We need to extract the book ID from the book string (format: "ID - Title")
+                    String bookInfo = br.getBook();
+                    if (bookInfo != null && bookInfo.contains(" - ")) {
+                        String bookIdStr = bookInfo.substring(0, bookInfo.indexOf(" - "));
+                        try {
+                            int bookId = Integer.parseInt(bookIdStr);
+                            if (bookId == book.getBookID() && "Borrowed".equals(br.getStatus())) {
+                                selectedBorrowId = br.getBorrowID();
+                                break;
+                            }
+                        } catch (NumberFormatException e) {
+                            // Ignore invalid book ID format
+                        }
+                    }
+                }
+                
+                if (selectedBorrowId != -1) {
+                    int damagePercentage = (int) (Math.random() * 100);
+                    Return returnRecord = new Return(selectedBorrowId, LocalDate.now(), damagePercentage);
+                    returnRepository.insert(returnRecord).join();
+                    util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được trả thành công.", null);
+                } else {
+                    util.ErrorDialog.showError("Error", "Could not find borrow record for this book.", null);
+                }
             } else {
                 util.ErrorDialog.showError("Thông báo", "Bạn chưa mượn sách này", null);
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             util.ErrorDialog.showError("Database Error", e.getMessage(), null);
         }
@@ -234,14 +261,14 @@ public class bookDetailController {
             if (update) {
                 book.setRating(
                         (book.getRating() * book.getReviewCount() - currentRating + rating) / book.getReviewCount());
-                bookRepository.update(book, book.getBookID());
+                bookRepository.update(book, book.getBookID()).join();
             } else {
                 bookRepository.addRating(book.getBookID(), rating);
-                book = bookRepository.get(book.getBookID());
+                book = bookRepository.get(book.getBookID()).join();
             }
             updateBookDetails();
             ErrorDialog.showSuccess("Success", "Rating added successfully.", null);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             util.ErrorDialog.showError("Database Error", e.getMessage(), null);
         }

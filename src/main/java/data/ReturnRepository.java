@@ -1,10 +1,8 @@
 package data;
 
-import DAO.ReturnDao;
 import model.Return;
+import java.util.concurrent.CompletableFuture;
 
-public class ReturnRepository extends BaseRepository<Return> {
-    public ReturnRepository() {
-        this.dao = ReturnDao.getInstance();
-    }
+public interface ReturnRepository extends BaseRepository<Return, Integer> {
+    // Additional methods can be added here if needed
 }

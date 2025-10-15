@@ -1,10 +1,8 @@
 package data;
 
-import DAO.ManagerDao;
 import model.Manager;
+import java.util.concurrent.CompletableFuture;
 
-public class ManagerRepository extends BaseRepository<Manager> {
-    public ManagerRepository() {
-        this.dao = ManagerDao.getInstance();
-    }
+public interface ManagerRepository extends BaseRepository<Manager, Integer> {
+    // Additional methods can be added here if needed
 }

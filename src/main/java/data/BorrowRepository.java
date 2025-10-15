@@ -1,16 +1,8 @@
 package data;
 
-import java.sql.SQLException;
-
-import DAO.BorrowDao;
 import model.Borrow;
+import java.util.concurrent.CompletableFuture;
 
-public class BorrowRepository extends BaseRepository<Borrow> {
-    public BorrowRepository() {
-        this.dao = BorrowDao.getInstance();
-    }
-
-    public int getID(Borrow borrow) throws SQLException {
-        return ((BorrowDao) dao).getID(borrow);
-    }
+public interface BorrowRepository extends BaseRepository<Borrow, Integer> {
+    // Additional methods can be added here if needed
 }

@@ -2,6 +2,8 @@ package Main;
 
 import java.io.IOException;
 
+import data.AppContainer;
+import data.DefaultAppContainer;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -11,6 +13,7 @@ import javafx.stage.Stage;
 public class Main extends Application {
 
     private static Main instance;
+    public static AppContainer appContainer;
 
     public Main() {
         instance = this;
@@ -23,6 +26,9 @@ public class Main extends Application {
     @Override
     @SuppressWarnings("CallToPrintStackTrace")
     public void start(Stage stage) throws Exception {
+        // Initialize the app container
+        appContainer = DefaultAppContainer.getInstance();
+        
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/login.fxml"));
             if (loader.getLocation() == null) {

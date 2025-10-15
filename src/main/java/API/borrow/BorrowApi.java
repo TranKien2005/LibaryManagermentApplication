@@ -2,10 +2,11 @@ package API.borrow;
 
 import API.BaseApi;
 import model.Borrow;
+import java.util.concurrent.CompletableFuture;
 
 /**
- * Async API interface matching BorrowDao methods.
+ * API interface for Borrow operations.
  */
 public interface BorrowApi extends BaseApi<Borrow, Integer> {
-    // BaseApi already declares CRUD/getAllID/getID contracts; add any borrow-specific methods here
+    // Additional methods can be added here if needed
 }

@@ -1,59 +1,110 @@
 package service;
 
-import DAO.BookDao;
+import data.BookRepository;
 import model.Document;
-import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
- * Service layer for book-related operations. Encapsulates BookDao and
- * provides a small in-memory cache for read-mostly lists (top/trending/favorites).
+ * Service class demonstrating how to use BookRepository with API implementation.
+ * This service handles book-related operations by delegating to the repository.
  */
 public class BookService {
-    private static final BookService INSTANCE = new BookService();
-
-    private final BookDao bookDao = BookDao.getInstance();
-    private final AppCache appCache = AppCache.getInstance();
-
-    private BookService() {}
-
-    public static BookService getInstance() {
-        return INSTANCE;
+    
+    private final BookRepository bookRepository;
+    
+    public BookService(BookRepository bookRepository) {
+        this.bookRepository = bookRepository;
     }
-
-    public List<Document> getTopRatedBooks() throws SQLException {
-    List<Document> cached = appCache.getTopRatedBooks();
-    if (cached != null) return cached;
-    List<Document> fresh = bookDao.getTopRatedBooks();
-    if (fresh != null) appCache.setTopRatedBooks(fresh);
-    return fresh;
+    
+    /**
+     * Gets a paginated list of books.
+     * Calls API endpoint: GET /api/books?page=&size=
+     * 
+     * @param page Page number (0-based)
+     * @param size Number of items per page
+     * @return CompletableFuture with list of books
+     */
+    public CompletableFuture<List<Document>> getBooks(int page, int size) {
+        // This will call the API implementation of BookRepository
+        return bookRepository.getAll(page, size);
     }
-
-    public List<Document> getTrendingBooks() throws SQLException {
-    List<Document> cached = appCache.getTrendingBooks();
-    if (cached != null) return cached;
-    List<Document> fresh = bookDao.getTrendingBooks();
-    if (fresh != null) appCache.setTrendingBooks(fresh);
-    return fresh;
+    
+    /**
+     * Gets a book by its ID.
+     * Calls API endpoint: GET /api/books/{id}
+     * 
+     * @param id Book ID
+     * @return CompletableFuture with the book
+     */
+    public CompletableFuture<Document> getBookById(Integer id) {
+        return bookRepository.get(id);
     }
-
-    public List<Document> getFavoriteBooksForAccount(int accountId) throws SQLException {
-    List<Document> cached = appCache.getFavoriteBooksForAccount(accountId);
-    if (cached != null) return cached;
-    List<Document> fresh = bookDao.getFavorite(accountId);
-    if (fresh != null) appCache.setFavoriteBooksForAccount(accountId, fresh);
-    return fresh;
+    
+    /**
+     * Creates a new book.
+     * Calls API endpoint: POST /api/books
+     * 
+     * @param book Book to create
+     * @return CompletableFuture
+     */
+    public CompletableFuture<Void> createBook(Document book) {
+        return bookRepository.insert(book);
     }
-
-    public List<Document> getNewArrivals(int page, int pageSize) throws SQLException {
-        // new arrivals are paged; don't cache pages by default
-        return bookDao.getAll(page, pageSize);
+    
+    /**
+     * Updates an existing book.
+     * Calls API endpoint: PUT /api/books/{id}
+     * 
+     * @param book Book with updated information
+     * @param id ID of the book to update
+     * @return CompletableFuture
+     */
+    public CompletableFuture<Void> updateBook(Document book, Integer id) {
+        return bookRepository.update(book, id);
     }
-
-    public List<Document> searchNewArrivals(String text, int page, int pageSize) throws SQLException {
-        // search results are dynamic; don't cache
-        return bookDao.searchNewArrivals(text, page, pageSize);
+    
+    /**
+     * Deletes a book by its ID.
+     * Calls API endpoint: DELETE /api/books/{id}
+     * 
+     * @param id Book ID to delete
+     * @return CompletableFuture
+     */
+    public CompletableFuture<Void> deleteBook(Integer id) {
+        return bookRepository.delete(id);
     }
-
-    // Cache is managed by AppCache; clearing is done via AppCache.clearBookCache()
+    
+    /**
+     * Gets top-rated books.
+     * Calls API endpoint: GET /api/books/top-rated
+     * 
+     * @return CompletableFuture with list of top-rated books
+     */
+    public CompletableFuture<List<Document>> getTopRatedBooks() {
+        return ((data.BookRepository) bookRepository).getTopRatedBooks();
+    }
+    
+    /**
+     * Gets trending books.
+     * Calls API endpoint: GET /api/books/trending
+     * 
+     * @return CompletableFuture with list of trending books
+     */
+    public CompletableFuture<List<Document>> getTrendingBooks() {
+        return ((data.BookRepository) bookRepository).getTrendingBooks();
+    }
+    
+    /**
+     * Searches for books.
+     * Calls API endpoint: GET /api/books/search?query=&page=&size=
+     * 
+     * @param query Search query
+     * @param page Page number (0-based)
+     * @param size Number of items per page
+     * @return CompletableFuture with list of matching books
+     */
+    public CompletableFuture<List<Document>> searchBooks(String query, int page, int size) {
+        return ((data.BookRepository) bookRepository).search(query, page, size);
+    }
 }

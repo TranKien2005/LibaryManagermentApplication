@@ -1,29 +1,14 @@
 package data;
 
-import java.sql.SQLException;
-
-import DAO.AccountDao;
+import java.util.concurrent.CompletableFuture;
 import model.Account;
 
-public class AccountRepository extends BaseRepository<Account> {
-
-    public AccountRepository() {
-        this.dao = AccountDao.getInstance();
-    }
-
-    public Account findByUsername(String username) throws SQLException {
-        return ((AccountDao) dao).findByUsername(username);
-    }
-
-    public boolean isUsernameExists(String username) throws SQLException {
-        return ((AccountDao) dao).isUsernameExists(username);
-    }
-
-    public int add(Account account) throws SQLException {
-        return ((AccountDao) dao).add(account);
-    }
-
-    public void updatePassword(int accountId, String newPassword) throws SQLException {
-        ((AccountDao) dao).updatePassword(accountId, newPassword);
-    }
+public interface AccountRepository extends BaseRepository<Account, Integer> {
+    CompletableFuture<Account> findByUsername(String username);
+    
+    CompletableFuture<Boolean> isUsernameExists(String username);
+    
+    CompletableFuture<Integer> add(Account account);
+    
+    CompletableFuture<Void> updatePassword(int accountId, String newPassword);
 }

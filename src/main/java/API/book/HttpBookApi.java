@@ -1,11 +1,16 @@
 package API.book;
 
 import API.BaseHttpApi;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import model.Document;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
+/**
+ * HTTP implementation of BookApi.
+ */
 public class HttpBookApi extends BaseHttpApi<Document, Integer> implements BookApi {
+    
     public HttpBookApi(String baseUrl) {
         super(baseUrl, "/api/books");
     }
@@ -25,29 +30,23 @@ public class HttpBookApi extends BaseHttpApi<Document, Integer> implements BookA
         return client.getAsync(baseUrl + resourcePath + "/ids", new com.google.gson.reflect.TypeToken<java.util.List<Integer>>(){}.getType());
     }
 
-    // custom endpoints kept as-is
+    // custom endpoints
     @Override
-    public CompletableFuture<Void> setBookImage(Integer bookId, String imagePath) {
-        java.util.Map<String,String> payload = java.util.Map.of("imagePath", imagePath);
-        return client.putAsync(baseUrl + resourcePath + "/" + bookId + "/image", payload, Object.class).thenApply(r -> { r.toString(); return null; });
+    public CompletableFuture<Void> setBookImageUrl(int bookId, String imageUrl) {
+        Map<String, String> payload = Map.of("imageUrl", imageUrl);
+        return client.putAsync(baseUrl + resourcePath + "/" + bookId + "/image", payload, Object.class).thenApply(r -> null);
     }
 
     @Override
-    public CompletableFuture<Void> setBookImageByURL(Integer id, String imageUrl) {
-        java.util.Map<String,String> payload = java.util.Map.of("imageUrl", imageUrl);
-        return client.putAsync(baseUrl + resourcePath + "/" + id + "/image-by-url", payload, Object.class).thenApply(r -> { r.toString(); return null; });
+    public CompletableFuture<Void> setDescription(int id, String description) {
+        Map<String, String> payload = Map.of("description", description);
+        return client.putAsync(baseUrl + resourcePath + "/" + id + "/description", payload, Object.class).thenApply(r -> null);
     }
 
     @Override
-    public CompletableFuture<Void> setDescription(Integer id, String description) {
-        java.util.Map<String,String> payload = java.util.Map.of("description", description);
-        return client.putAsync(baseUrl + resourcePath + "/" + id + "/description", payload, Object.class).thenApply(r -> { r.toString(); return null; });
-    }
-
-    @Override
-    public CompletableFuture<Void> addRating(Integer id, int newRating) {
-        java.util.Map<String,Integer> payload = java.util.Map.of("rating", newRating);
-        return client.putAsync(baseUrl + resourcePath + "/" + id + "/rating", payload, Object.class).thenApply(r -> { r.toString(); return null; });
+    public CompletableFuture<Void> addRating(int id, int newRating) {
+        Map<String, Integer> payload = Map.of("rating", newRating);
+        return client.putAsync(baseUrl + resourcePath + "/" + id + "/rating", payload, Object.class).thenApply(r -> null);
     }
 
     @Override
@@ -56,7 +55,7 @@ public class HttpBookApi extends BaseHttpApi<Document, Integer> implements BookA
     }
 
     @Override
-    public CompletableFuture<List<Document>> getFavorite(Integer accountId) {
+    public CompletableFuture<List<Document>> getFavorite(int accountId) {
         return client.getAsync(baseUrl + resourcePath + "/favorite?accountId=" + accountId, new com.google.gson.reflect.TypeToken<List<Document>>(){}.getType());
     }
 
@@ -67,12 +66,17 @@ public class HttpBookApi extends BaseHttpApi<Document, Integer> implements BookA
 
     @Override
     public CompletableFuture<List<Document>> getAll(int page, int pageSize) {
-        return client.getAsync(baseUrl + resourcePath + "?page=" + page + "&pageSize=" + pageSize, new com.google.gson.reflect.TypeToken<List<Document>>(){}.getType());
+        return client.getAsync(baseUrl + resourcePath + "?page=" + page + "&size=" + pageSize, new com.google.gson.reflect.TypeToken<List<Document>>(){}.getType());
     }
 
     @Override
-    public CompletableFuture<List<Document>> searchNewArrivals(String searchText, int page, int pageSize) {
-        String q = java.net.URLEncoder.encode(searchText, java.nio.charset.StandardCharsets.UTF_8);
-        return client.getAsync(baseUrl + resourcePath + "/search-new?query=" + q + "&page=" + page + "&pageSize=" + pageSize, new com.google.gson.reflect.TypeToken<List<Document>>(){}.getType());
+    public CompletableFuture<List<Document>> search(String query, int page, int pageSize) {
+        String q = java.net.URLEncoder.encode(query, java.nio.charset.StandardCharsets.UTF_8);
+        return client.getAsync(baseUrl + resourcePath + "/search?query=" + q + "&page=" + page + "&size=" + pageSize, new com.google.gson.reflect.TypeToken<List<Document>>(){}.getType());
+    }
+
+    @Override
+    public CompletableFuture<List<Document>> getNewArrivals(int page, int pageSize) {
+        return client.getAsync(baseUrl + resourcePath + "/new-arrivals?page=" + page + "&size=" + pageSize, new com.google.gson.reflect.TypeToken<List<Document>>(){}.getType());
     }
 }

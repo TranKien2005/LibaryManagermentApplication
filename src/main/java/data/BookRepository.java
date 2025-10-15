@@ -1,4 +1,4 @@
-package DAO;
+package data;
 
 import model.Document;
 import java.util.List;
@@ -23,5 +23,7 @@ public interface BookRepository extends BaseRepository<Document, Integer> {
     
     CompletableFuture<List<Document>> getAll(int page, int pageSize);
     
-    CompletableFuture<List<Document>> searchNewArrivals(String searchText, int page, int pageSize);
+    CompletableFuture<List<Document>> search(String query, int page, int pageSize);
+    
+    CompletableFuture<List<Document>> getNewArrivals(int page, int pageSize);
 }

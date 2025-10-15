@@ -1,10 +1,8 @@
 package data;
 
-import DAO.UserDao;
 import model.User;
+import java.util.concurrent.CompletableFuture;
 
-public class UserRepository extends BaseRepository<User> {
-    public UserRepository() {
-        this.dao = UserDao.getInstance();
-    }
+public interface UserRepository extends BaseRepository<User, Integer> {
+    // Additional methods can be added here if needed
 }

@@ -1,10 +1,15 @@
 package API.account;
 
 import API.BaseHttpApi;
-import java.util.concurrent.CompletableFuture;
 import model.Account;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
+/**
+ * HTTP implementation of AccountApi.
+ */
 public class HttpAccountApi extends BaseHttpApi<Account, Integer> implements AccountApi {
+    
     public HttpAccountApi(String baseUrl) {
         super(baseUrl, "/api/accounts");
     }
@@ -15,19 +20,43 @@ public class HttpAccountApi extends BaseHttpApi<Account, Integer> implements Acc
     }
 
     @Override
-    public CompletableFuture<Account> getByUsername(String username) {
-        return client.getAsync(baseUrl + resourcePath + "/by-username?username=" + username, Account.class);
+    public CompletableFuture<Account> findByUsername(String username) {
+        return client.getAsync(baseUrl + resourcePath + "/by-username/" + username, Account.class);
     }
 
     @Override
-    public CompletableFuture<Void> updatePassword(Integer id, String newPassword) {
-        java.util.Map<String,String> payload = new java.util.HashMap<>();
-        payload.put("password", newPassword);
-        return client.putAsync(baseUrl + resourcePath + "/" + id + "/password", payload, Object.class).thenApply(r -> { r.toString(); return null; });
+    public CompletableFuture<Boolean> isUsernameExists(String username) {
+        return client.getAsync(baseUrl + resourcePath + "/exists/" + username, Boolean.class);
     }
 
     @Override
-    public CompletableFuture<Integer> getID(Account account) {
-        return client.postAsync(baseUrl + resourcePath + "/get-id", account, Integer.class);
+    public CompletableFuture<Integer> add(Account account) {
+        return client.postAsync(baseUrl + resourcePath, account, Integer.class);
+    }
+
+    @Override
+    public CompletableFuture<Void> updatePassword(int accountId, String newPassword) {
+        Map<String, String> payload = Map.of("newPassword", newPassword);
+        return client.putAsync(baseUrl + resourcePath + "/" + accountId + "/password", payload, Object.class)
+                .thenApply(r -> null);
+    }
+
+    @Override
+    public CompletableFuture<Account> register(String username, String password, String accountType) {
+        Map<String, String> payload = Map.of(
+            "username", username,
+            "password", password,
+            "accountType", accountType
+        );
+        return client.postAsync(baseUrl + resourcePath + "/register", payload, Account.class);
+    }
+
+    @Override
+    public CompletableFuture<String> login(String username, String password) {
+        Map<String, String> payload = Map.of(
+            "username", username,
+            "password", password
+        );
+        return client.postAsync(baseUrl + resourcePath + "/login", payload, String.class);
     }
 }

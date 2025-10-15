@@ -1,8 +1,23 @@
 package data;
 
+import API.account.AccountApi;
+import API.account.HttpAccountApi;
+import API.book.BookApi;
+import API.book.HttpBookApi;
+import API.borrow.BorrowApi;
+import API.borrow.HttpBorrowApi;
+import API.borrowreturn.BorrowReturnApi;
+import API.borrowreturn.HttpBorrowReturnApi;
+import API.manager.HttpManagerApi;
+import API.manager.ManagerApi;
+import API.returnpkg.HttpReturnApi;
+import API.returnpkg.ReturnApi;
+import API.user.HttpUserApi;
+import API.user.UserApi;
 import service.HomeService;
 import service.MemberManagementService;
 import service.MenuService;
+import service.MenuUserService;
 import service.MyAccountService;
 import service.add.AddBookService;
 import service.auth.AuthService;
@@ -12,17 +27,29 @@ public class DefaultAppContainer implements AppContainer {
 
     private static DefaultAppContainer instance = null;
 
-    private final AccountRepository accountRepository = new AccountRepository();
-    private final BookRepository bookRepository = new BookRepository();
-    private final UserRepository userRepository = new UserRepository();
-    private final BorrowRepository borrowRepository = new BorrowRepository();
-    private final ReturnRepository returnRepository = new ReturnRepository();
-    private final ManagerRepository managerRepository = new ManagerRepository();
-    private final BorrowReturnRepository borrowReturnRepository = new BorrowReturnRepository();
+    // API clients
+    private final AccountApi accountApi = new HttpAccountApi("http://localhost:8080");
+    private final BookApi bookApi = new HttpBookApi("http://localhost:8080");
+    private final UserApi userApi = new HttpUserApi("http://localhost:8080");
+    private final BorrowApi borrowApi = new HttpBorrowApi("http://localhost:8080");
+    private final ReturnApi returnApi = new HttpReturnApi("http://localhost:8080");
+    private final ManagerApi managerApi = new HttpManagerApi("http://localhost:8080");
+    private final BorrowReturnApi borrowReturnApi = new HttpBorrowReturnApi("http://localhost:8080");
+    
+    // Adapters
+    private final AccountRepository accountRepository = new AccountRepositoryAdapter(accountApi);
+    private final BookRepository bookRepository = new BookRepositoryAdapter(bookApi);
+    private final UserRepository userRepository = new UserRepositoryAdapter(userApi);
+    private final BorrowRepository borrowRepository = new BorrowRepositoryAdapter(borrowApi);
+    private final ReturnRepository returnRepository = new ReturnRepositoryAdapter(returnApi);
+    private final ManagerRepository managerRepository = new ManagerRepositoryAdapter(managerApi);
+    private final BorrowReturnRepository borrowReturnRepository = new BorrowReturnRepositoryAdapter(borrowReturnApi);
+    
     private final HomeService homeService = new HomeService(bookRepository);
     private final RegisterService registerService = new RegisterService(accountRepository, userRepository, managerRepository);
     private final MemberManagementService memberManagementService = new MemberManagementService(userRepository, accountRepository);
     private final MenuService menuService = new MenuService(accountRepository, userRepository, bookRepository, borrowRepository, returnRepository, managerRepository, borrowReturnRepository);
+    private final MenuUserService menuUserService = new MenuUserService(bookRepository, borrowReturnRepository, accountRepository, userRepository, managerRepository, borrowRepository, returnRepository);
     private final MyAccountService myAccountService = new MyAccountService(userRepository, accountRepository, managerRepository);
     private final AddBookService addBookService = new AddBookService(bookRepository);
     private final AuthService authService = new AuthService(accountRepository);
@@ -92,6 +119,11 @@ public class DefaultAppContainer implements AppContainer {
     @Override
     public MenuService getMenuService() {
         return menuService;
+    }
+
+    @Override
+    public MenuUserService getMenuUserService() {
+        return menuUserService;
     }
 
     @Override

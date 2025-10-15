@@ -1,4 +1,4 @@
-package DAO;
+package data;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
