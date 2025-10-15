@@ -1,21 +1,24 @@
 package Controller;
 
+import java.io.IOException;
 import java.sql.SQLException;
-
-import javafx.scene.control.Label;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import DAO.*;
+import Main.Main;
 import QR.QRScanner;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -23,13 +26,14 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
-import model.*;
-import util.ErrorDialog;
 import javafx.stage.Stage;
-import javafx.scene.Scene;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import java.io.IOException;
+import model.Account;
+import model.BorrowReturn;
+import model.Document;
+import model.Manager;
+import model.User;
+import service.MenuUserService;
+import util.ErrorDialog;
 
 public class menuUserController {
     private HomeController homeController;
@@ -39,6 +43,8 @@ public class menuUserController {
     public static List<Document> bookList = new ArrayList<>();
     public static List<BorrowReturn> borrowReturnList = new ArrayList<>();
     public Image defaulImage = new Image(getClass().getResourceAsStream("/images/menu/coverArtUnknown.png"));
+
+    private final MenuUserService menuUserService;
 
     public static int getAccountID() {
         return accountID;
@@ -55,10 +61,14 @@ public class menuUserController {
         return instance;
     }
 
+    public menuUserController() {
+        this.menuUserService = Main.appContainer.getMenuUserService();
+    }
+
     public void resetList() {
         try {
-            bookList = BookDao.getInstance().getAll();
-            borrowReturnList = BorrowReturnDAO.getInstance().getByAccountId(accountID);
+            bookList = menuUserService.getAllBooks();
+            borrowReturnList = menuUserService.getBorrowReturnList(accountID);
         } catch (SQLException e) {
             util.ErrorDialog.showError("Database Error", e.getMessage(), null);
         } catch (Exception e) {
@@ -131,16 +141,16 @@ public class menuUserController {
         instance = this;
 
         try {
-            Account account = AccountDao.getInstance().get(accountID);
+            Account account = menuUserService.getAccount(accountID);
             if (account != null) {
                 if (account.getAccountType().equals("User")) {
-                    User currentUser = UserDao.getInstance().get(accountID);
+                    User currentUser = menuUserService.getUser(accountID);
                     if (currentUser != null) {
                         userName.setText("User: " + currentUser.getFullName());
                         cbMembers.setText(currentUser.getAccountID() + " - " + currentUser.getFullName());
                     }
                 } else {
-                    Manager currentUser = ManagerDao.getInstance().get(accountID);
+                    Manager currentUser = menuUserService.getManager(accountID);
                     if (currentUser != null) {
                         userName.setText("Manager: " + currentUser.getFullName());
                         cbMembers.setText(currentUser.getAccountID() + " - " + currentUser.getFullName());
@@ -259,16 +269,16 @@ public class menuUserController {
             cbDocuments.getItems().clear();
 
             cbDocuments.getEditor().clear();
-            Account account = AccountDao.getInstance().get(accountID);
+            Account account = menuUserService.getAccount(accountID);
             if (account != null) {
                 if (account.getAccountType().equals("User")) {
-                    User currentUser = UserDao.getInstance().get(accountID);
+                    User currentUser = menuUserService.getUser(accountID);
                     if (currentUser != null) {
                         userName.setText("User: " + currentUser.getFullName());
                         cbMembers.setText(currentUser.getAccountID() + " - " + currentUser.getFullName());
                     }
                 } else {
-                    Manager currentUser = ManagerDao.getInstance().get(accountID);
+                    Manager currentUser = menuUserService.getManager(accountID);
                     if (currentUser != null) {
                         userName.setText("Manager: " + currentUser.getFullName());
                         cbMembers.setText(currentUser.getAccountID() + " - " + currentUser.getFullName());
@@ -345,14 +355,7 @@ public class menuUserController {
 
         try {
             int selectedDocumentId = Integer.parseInt(nameDocument);
-            Borrow newBorrow = new Borrow(
-                    selectedMemberId,
-                    selectedDocumentId,
-                    borrowDate,
-                    returnDate,
-                    "Borrowed");
-
-            BorrowDao.getInstance().insert(newBorrow);
+            menuUserService.borrowDocument(selectedMemberId, selectedDocumentId, borrowDate, returnDate);
             util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được mượn thành công.",
                     (Stage) cbDocuments.getScene().getWindow());
 
@@ -370,34 +373,14 @@ public class menuUserController {
     @FXML
     private void handleReturnDocument() {
         try {
-            Borrow selectedBorrow = BorrowDao.getInstance()
-                    .get(tvBorrowedDocuments.getSelectionModel().getSelectedItem().getBorrowID());
-
-            if (selectedBorrow == null) {
+            BorrowReturn selectedBorrowReturn = tvBorrowedDocuments.getSelectionModel().getSelectedItem();
+            if (selectedBorrowReturn == null) {
                 util.ErrorDialog.showError("Lỗi", "Vui lòng chọn một tài liệu đã mượn từ bảng để trả.",
                         (Stage) tvBorrowedDocuments.getScene().getWindow());
                 return;
             }
-
-            // Check if the document has already been returned
-            Return existingReturnRecord = ReturnDao.getInstance().get(selectedBorrow.getBorrowID());
-            if (existingReturnRecord != null) {
-                util.ErrorDialog.showError("Lỗi", "Tài liệu này đã được trả trước đó.",
-                        (Stage) tvBorrowedDocuments.getScene().getWindow());
-                return;
-            }
-
-            Document selectedDocument = BookDao.getInstance().get(selectedBorrow.getBookID());
-            if (selectedDocument == null) {
-                util.ErrorDialog.showError("Lỗi", "Không tìm thấy tài liệu.",
-                        (Stage) tvBorrowedDocuments.getScene().getWindow());
-                return;
-            }
-
-            int damagePercentage = (int) (Math.random() * 100); // Random damage percentage between 0 and 100
-            Return returnRecord = new Return(BorrowDao.getInstance().getID(selectedBorrow),
-                    LocalDate.now(), damagePercentage);
-            ReturnDao.getInstance().insert(returnRecord);
+            
+            menuUserService.returnDocument(selectedBorrowReturn.getBorrowID());
             util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được trả thành công.",
                     (Stage) tvBorrowedDocuments.getScene().getWindow());
             handleReload();
@@ -519,7 +502,7 @@ public class menuUserController {
                         return;
                     }
                     int bookID = Integer.parseInt(qrCodeText.substring("BookID:".length()).trim());
-                    Document document = BookDao.getInstance().get(bookID);
+                    Document document = menuUserService.getBook(bookID);
                     ishandlingQR = true;
                     if (borrowAndReturnTab.isVisible()) {
                         cbDocuments.setValue(bookID + " - " + document.getTitle());

@@ -1,13 +1,10 @@
-package DAO;
+package data;
 
+import DAO.ReturnDao;
 import model.Return;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
-/**
- * Async repository interface for Return operations.
- * Provides non-blocking alternatives to all ReturnDao methods.
- */
-public interface ReturnRepository extends BaseRepository<Return, Integer> {
-    // All methods are inherited from BaseRepository
+public class ReturnRepository extends BaseRepository<Return> {
+    public ReturnRepository() {
+        this.dao = ReturnDao.getInstance();
+    }
 }

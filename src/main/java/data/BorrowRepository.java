@@ -1,13 +1,16 @@
-package DAO;
+package data;
 
+import java.sql.SQLException;
+
+import DAO.BorrowDao;
 import model.Borrow;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
-/**
- * Async repository interface for Borrow operations.
- * Provides non-blocking alternatives to all BorrowDao methods.
- */
-public interface BorrowRepository extends BaseRepository<Borrow, Integer> {
-    // All methods are inherited from BaseRepository
+public class BorrowRepository extends BaseRepository<Borrow> {
+    public BorrowRepository() {
+        this.dao = BorrowDao.getInstance();
+    }
+
+    public int getID(Borrow borrow) throws SQLException {
+        return ((BorrowDao) dao).getID(borrow);
+    }
 }

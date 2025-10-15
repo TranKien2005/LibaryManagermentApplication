@@ -2,6 +2,7 @@ package data;
 
 import service.HomeService;
 import service.MemberManagementService;
+import service.MenuUserService;
 import service.register.RegisterService;
 
 public class DefaultAppContainer implements AppContainer {
@@ -18,6 +19,7 @@ public class DefaultAppContainer implements AppContainer {
     private final HomeService homeService = new HomeService(bookRepository);
     private final RegisterService registerService = new RegisterService(accountRepository, userRepository, managerRepository);
     private final MemberManagementService memberManagementService = new MemberManagementService(userRepository, accountRepository);
+    private final MenuUserService menuUserService = new MenuUserService(bookRepository, borrowReturnRepository, accountRepository, userRepository, managerRepository, borrowRepository, returnRepository);
 
 
     private DefaultAppContainer() {
@@ -79,5 +81,10 @@ public class DefaultAppContainer implements AppContainer {
     @Override
     public MemberManagementService getMemberManagementService() {
         return memberManagementService;
+    }
+
+    @Override
+    public MenuUserService getMenuUserService() {
+        return menuUserService;
     }
 }
