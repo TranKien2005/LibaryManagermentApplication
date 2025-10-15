@@ -12,4 +12,5 @@ public interface AppContainer {
     BorrowReturnRepository getBorrowReturnRepository();
     HomeService getHomeService();
     RegisterService getRegisterService();
+    MemberManagementService getMemberManagementService();
 }

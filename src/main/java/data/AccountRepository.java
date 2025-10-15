@@ -1,15 +1,29 @@
-package DAO;
+package data;
 
+import java.sql.SQLException;
+
+import DAO.AccountDao;
 import model.Account;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
-/**
- * Async repository interface for Account operations.
- * Provides non-blocking alternatives to all AccountDao methods.
- */
-public interface AccountRepository extends BaseRepository<Account, Integer> {
-    CompletableFuture<Account> getByUsername(String username);
-    
-    CompletableFuture<Void> updatePassword(int id, String newPassword);
+public class AccountRepository extends BaseRepository<Account> {
+
+    public AccountRepository() {
+        this.dao = AccountDao.getInstance();
+    }
+
+    public Account findByUsername(String username) throws SQLException {
+        return ((AccountDao) dao).findByUsername(username);
+    }
+
+    public boolean isUsernameExists(String username) throws SQLException {
+        return ((AccountDao) dao).isUsernameExists(username);
+    }
+
+    public int add(Account account) throws SQLException {
+        return ((AccountDao) dao).add(account);
+    }
+
+    public void updatePassword(int accountId, String newPassword) throws SQLException {
+        ((AccountDao) dao).updatePassword(accountId, newPassword);
+    }
 }
