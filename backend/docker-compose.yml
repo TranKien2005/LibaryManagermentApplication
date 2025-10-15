@@ -2,6 +2,8 @@ services:
   postgres: 
     image: postgres:17.6
     container_name: sa-library-postgres
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -16,9 +18,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    env_file:
+      - .env
     container_name: sa-library-backend
     ports:
-      - "${BACKEND_PORT_OUTSIDE}:{BACKEND_PORT}"
+      - "${BACKEND_PORT_OUTSIDE}:${BACKEND_PORT}"
     depends_on:
       - postgres
     environment:
