@@ -138,23 +138,31 @@ public class LoginController {
      * open the main menu for the provided account.
      */
     private void showLoadingAndOpenMenu(Account account, Stage stageToReplace) {
-        Platform.runLater(() -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/loading.fxml"));
-                Parent root = loader.load();
-                Scene scene = new Scene(root);
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/loading.fxml"));
+            Parent root = loader.load();
+            LoadingController loadingController = loader.getController();
+            Scene scene = new Scene(root);
+            
+            Platform.runLater(() -> {
                 stageToReplace.setScene(scene);
                 stageToReplace.setTitle("Loading");
                 stageToReplace.show();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+            });
 
-        util.ThreadManager.execute(() -> {
-            try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
-            Platform.runLater(() -> openMenuForAccount(account, stageToReplace));
-        });
+            util.ThreadManager.execute(() -> {
+                try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+                Platform.runLater(() -> {
+                    if(loadingController != null) {
+                        loadingController.stopAnimation();
+                    }
+                    openMenuForAccount(account, stageToReplace);
+                });
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+            ErrorDialog.showError("Error", "Could not load loading screen.", null);
+        }
     }
 
 
