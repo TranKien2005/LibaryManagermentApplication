@@ -4,7 +4,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import DAO.BookDao;
+import Main.Main;
+import data.BookRepository;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -32,14 +33,14 @@ public class DeleteController extends menuController {
     @FXML
     private ListView<String> suggestionListView;
 
-    private final BookDao bookDao;
+    private final BookRepository bookRepository;
 
     public void setNameField(Document book) {
         nameField.setText(book.getBookID() + " - " + book.getTitle());
     }
 
     public DeleteController() {
-        this.bookDao = BookDao.getInstance();
+        this.bookRepository = Main.appContainer.bookRepository;
     }
 
     public List<Document> bookList = new ArrayList<>();
@@ -105,7 +106,7 @@ public class DeleteController extends menuController {
         confirmAlert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
-                    bookDao.delete(documentID);
+                    bookRepository.delete(documentID);
                     util.ErrorDialog.showSuccess("Xóa thành công", "Tài liệu đã được xóa.", null);
                     capNhatBangTaiLieu();
                     nameField.clear();
@@ -122,7 +123,7 @@ public class DeleteController extends menuController {
 
     private void capNhatBangTaiLieu() {
         try {
-            bookList = BookDao.getInstance().getAll();
+            bookList = bookRepository.getAll();
             SearchView.setItems(FXCollections.observableArrayList(bookList));
         } catch (SQLException e) {
             e.printStackTrace();
