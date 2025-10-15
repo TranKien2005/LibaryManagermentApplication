@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import QR.QRScanner;
+import Main.Main;
 import data.*;
 import googleAPI.BookInfo;
 import javafx.application.Platform;
@@ -192,16 +193,7 @@ public class menuController {
     }
 
     private void setupServices() {
-        DefaultAppContainer container = DefaultAppContainer.getInstance();
-        menuService = new MenuService(
-                container.getAccountRepository(),
-                container.getUserRepository(),
-                container.getBookRepository(),
-                container.getBorrowRepository(),
-                container.getReturnRepository(),
-                container.getManagerRepository(),
-                container.getBorrowReturnRepository()
-        );
+        menuService = Main.appContainer.getMenuService();
     }
 
     private void setupTableColumns() {

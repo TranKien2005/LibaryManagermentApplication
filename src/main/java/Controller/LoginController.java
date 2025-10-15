@@ -1,9 +1,9 @@
 package Controller;
 
 import java.io.IOException;
+import Main.Main;
 import model.Account;
 import service.auth.AuthService;
-import service.ServiceFactory;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -30,7 +30,11 @@ public class LoginController {
     @FXML
     protected Button loginButton;
 
-    private static final String DEFAULT_BASE_URL = "http://localhost:8080"; // TODO: centralize
+    private final AuthService authService;
+
+    public LoginController() {
+        this.authService = Main.appContainer.getAuthService();
+    }
 
     @FXML
     public void initialize() {
@@ -42,12 +46,11 @@ public class LoginController {
     protected void handleLogin() {
         String username = usernameField.getText();
         String password = passwordField.getText();
-        AuthService authService = ServiceFactory.getAuthService(DEFAULT_BASE_URL);
 
         // capture the current stage immediately (before we swap scenes) so we can close it later
         final Stage capturedStage = (Stage) loginButton.getScene().getWindow();
 
-    authService.authenticate(username, password).thenAccept(account -> {
+        authService.authenticate(username, password).thenAccept(account -> {
             if (account == null) {
                 Platform.runLater(() -> ErrorDialog.showError("Login Error", "Invalid username or password", null));
                 return;
@@ -191,7 +194,6 @@ public class LoginController {
                         int accountId = Integer.parseInt(qrCodeText.substring("accountID:".length()).trim());
                         loginInProgress = true;
                         qrScanner.stopQRScanner();
-                        AuthService authService = ServiceFactory.getAuthService(DEFAULT_BASE_URL);
                         final Stage capturedStage = (Stage) loginButton.getScene().getWindow();
                         authService.authenticateByAccountId(accountId).thenAccept(account -> {
                             if (account == null) {

@@ -2,8 +2,10 @@ package data;
 
 import service.HomeService;
 import service.MemberManagementService;
-import service.MenuUserService;
+import service.MenuService;
 import service.MyAccountService;
+import service.add.AddBookService;
+import service.auth.AuthService;
 import service.register.RegisterService;
 
 public class DefaultAppContainer implements AppContainer {
@@ -20,8 +22,10 @@ public class DefaultAppContainer implements AppContainer {
     private final HomeService homeService = new HomeService(bookRepository);
     private final RegisterService registerService = new RegisterService(accountRepository, userRepository, managerRepository);
     private final MemberManagementService memberManagementService = new MemberManagementService(userRepository, accountRepository);
-    private final MenuUserService menuUserService = new MenuUserService(bookRepository, borrowReturnRepository, accountRepository, userRepository, managerRepository, borrowRepository, returnRepository);
+    private final MenuService menuService = new MenuService(accountRepository, userRepository, bookRepository, borrowRepository, returnRepository, managerRepository, borrowReturnRepository);
     private final MyAccountService myAccountService = new MyAccountService(userRepository, accountRepository, managerRepository);
+    private final AddBookService addBookService = new AddBookService(bookRepository);
+    private final AuthService authService = new AuthService(accountRepository);
 
 
     private DefaultAppContainer() {
@@ -86,12 +90,22 @@ public class DefaultAppContainer implements AppContainer {
     }
 
     @Override
-    public MenuUserService getMenuUserService() {
-        return menuUserService;
+    public MenuService getMenuService() {
+        return menuService;
     }
 
     @Override
     public MyAccountService getMyAccountService() {
         return myAccountService;
+    }
+
+    @Override
+    public AddBookService getAddBookService() {
+        return addBookService;
+    }
+
+    @Override
+    public AuthService getAuthService() {
+        return authService;
     }
 }

@@ -3,8 +3,7 @@ package Controller;
 import java.io.File;
 import java.io.IOException;
 
-import data.BookRepository;
-import data.DefaultAppContainer;
+import Main.Main;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -47,7 +46,6 @@ public class AddController extends menuController {
     @FXML
     private TextField isbnField;
 
-    private BookRepository bookRepository;
     private AddBookService addBookService;
 
     private Consumer<Document> onAddListener;
@@ -108,8 +106,7 @@ public class AddController extends menuController {
 
     @FXML
     public void initialize() {
-        bookRepository = DefaultAppContainer.getInstance().getBookRepository();
-        addBookService = new AddBookService(bookRepository);
+        addBookService = Main.appContainer.getAddBookService();
         System.out.println("AddController đã được khởi tạo");
     }
 
