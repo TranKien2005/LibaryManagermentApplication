@@ -5,10 +5,12 @@ import com.library.backend.dtos.responses.ManagerDetailResponse;
 import com.library.backend.dtos.responses.StudentDetailResponse;
 import com.library.backend.entities.Manager;
 import com.library.backend.entities.Student;
+import com.library.backend.entities.User;
 import com.library.backend.exceptions.GeneralException;
 import com.library.backend.exceptions.ResponseCode;
 import com.library.backend.mappers.ManagerMapper;
 import com.library.backend.repositories.ManagerRepository;
+import com.library.backend.repositories.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -23,9 +25,13 @@ public class ManagerService {
 
     ManagerMapper managerMapper;
     ManagerRepository managerRepository;
+    UserRepository userRepository;
 
     public ManagerDetailResponse create(ManagerCreationRequest request) {
-        Manager manager = managerMapper.toManager(request);
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new GeneralException(ResponseCode.USER_NOT_FOUND));
+        Manager manager = new Manager();
+        manager.setUser(user);
         manager = managerRepository.save(manager);
         ManagerDetailResponse response = managerMapper.toManagerDetailResponse(manager);
         managerMapper.extraMap(response, manager.getUser());

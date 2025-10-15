@@ -9,6 +9,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -19,16 +21,25 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class InitConfig {
 
-    StudentService studentService;
-    ManagerService managerService;
-    BookService bookService;
-    BorrowService borrowService;
-    ReturnService returnService;
-    UserService userService;
+    DataInit init;
 
     @Bean
     ApplicationRunner applicationRunner() {
-        return args -> {
+        return args -> init.initData();
+    }
+
+    @Component
+    @RequiredArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+    static class DataInit {
+        StudentService studentService;
+        ManagerService managerService;
+        BookService bookService;
+        BorrowService borrowService;
+        ReturnService returnService;
+        UserService userService;
+        @Transactional
+        void initData() {
             List<UserDetailResponse> users = new ArrayList<>();
             List<ManagerDetailResponse> managers = new ArrayList<>();
             List<StudentDetailResponse> students = new ArrayList<>();
@@ -36,6 +47,7 @@ public class InitConfig {
             List<BorrowDetailResponse> borrows = new ArrayList<>();
             List<ReturnDetailResponse> returns = new ArrayList<>();
             if (!userService.isInit()) {
+                System.out.println("Init user");
                 List<UserCreationRequest> requests = List.of(
                         new UserCreationRequest("user1", "pass123", "Nguyen Van A", "a@example.com", "0901000001"),
                         new UserCreationRequest("user2", "pass234", "Tran Thi B", "b@example.com", "0901000002"),
@@ -47,17 +59,32 @@ public class InitConfig {
                     users.add(userService.create(request));
                 }
             }
+            else {
+                System.out.println("Fetch user");
+                users = userService.getAll();
+            }
             if (!managerService.isInit()) {
+                System.out.println("Init manager");
                 for (int i = 0; i < 2; i++) {
                     managers.add(managerService.create(ManagerCreationRequest.builder().userId(users.get(i).getId()).build()));
                 }
             }
+            else {
+                System.out.println("Fetch manager");
+                managers = managerService.getAll();
+            }
             if (!studentService.isInit()) {
+                System.out.println("Init student");
                 for (int i = 2; i < users.size(); i++) {
                     students.add(studentService.create(StudentCreationRequest.builder().userId(users.get(i).getId()).build()));
                 }
             }
+            else {
+                System.out.println("Fetch student");
+                students = studentService.getAll();
+            }
             if (!bookService.isInit()) {
+                System.out.println("Init book");
                 List<BookCreationRequest> requests = List.of(
                         new BookCreationRequest(
                                 "Lập trình Java từ cơ bản đến nâng cao",
@@ -114,7 +141,12 @@ public class InitConfig {
                     books.add(bookService.create(request));
                 }
             }
+            else {
+                System.out.println("Fetch book");
+                books = bookService.getAll();
+            }
             if (!borrowService.isInit()) {
+                System.out.println("Init borrow");
                 List<BorrowCreationRequest> requests = List.of(
                         BorrowCreationRequest.builder()
                                 .studentId(students.get(0).getId())
@@ -172,6 +204,10 @@ public class InitConfig {
                     borrows.add(borrowService.create(request));
                 }
             }
+            else {
+                System.out.println("Fetch borrow");
+                borrows = borrowService.getAll();
+            }
             if (!returnService.isInit()) {
                 List<ReturnCreationRequest> returnRequests = List.of(
                         ReturnCreationRequest.builder()
@@ -199,7 +235,14 @@ public class InitConfig {
                     returns.add(returnService.create(request));
                 }
             }
-        };
+            else {
+                System.out.println("Fetch borrow");
+                returns = returnService.getAll();
+            }
+        }
     }
+
+
+
 
 }

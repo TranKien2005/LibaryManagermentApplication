@@ -3,6 +3,7 @@ package com.library.backend.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.cglib.core.Local;
 
 import java.time.LocalDate;
 
@@ -32,10 +33,10 @@ public class Borrow {
     @JoinColumn(name = "bookId", nullable = false)
     Book book;
 
-    LocalDate borrowDate;
+    LocalDate borrowDate = LocalDate.now();
 
     LocalDate expectedReturnDate;
 
     @Enumerated(EnumType.STRING)
-    Type status;
+    Type status = Type.Borrowed;
 }

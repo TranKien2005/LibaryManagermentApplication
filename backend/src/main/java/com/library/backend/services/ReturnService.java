@@ -41,7 +41,8 @@ public class ReturnService {
                 .orElseThrow(() -> new GeneralException(ResponseCode.BORROW_NOT_FOUND));
         borrow.setStatus(Borrow.Type.Returned);
         borrowRepository.save(borrow);
-        Book book = borrow.getBook();
+        Book book = bookRepository.findById(borrow.getBook().getId())
+                .orElseThrow(() -> new GeneralException(ResponseCode.BOOK_NOT_FOUND));
         book.setAvailableCopies(book.getAvailableCopies() + 1);
         bookRepository.save(book);
         Return r = returnMapper.toReturn(request);

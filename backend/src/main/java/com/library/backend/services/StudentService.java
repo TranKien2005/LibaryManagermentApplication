@@ -8,6 +8,7 @@ import com.library.backend.exceptions.GeneralException;
 import com.library.backend.exceptions.ResponseCode;
 import com.library.backend.mappers.StudentMapper;
 import com.library.backend.repositories.StudentRepository;
+import com.library.backend.repositories.UserRepository;
 import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.RequiredArgsConstructor;
@@ -23,9 +24,13 @@ public class StudentService {
 
     StudentRepository studentRepository;
     StudentMapper studentMapper;
+    UserRepository userRepository;
 
     public StudentDetailResponse create(StudentCreationRequest request) {
-        Student student = studentMapper.toStudent(request);
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new GeneralException(ResponseCode.USER_NOT_FOUND));
+        Student student = new Student();
+        student.setUser(user);
         student = studentRepository.save(student);
         return StudentDetailResponse.builder()
                 .id(student.getUserId())

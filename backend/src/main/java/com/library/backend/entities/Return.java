@@ -23,8 +23,8 @@ public class Return {
     @JoinColumn(name = "borrowId", nullable = false)
     Borrow borrow;
 
-    LocalDate returnDate;
+    LocalDate returnDate = LocalDate.now();
 
-    Integer damagePercentage;
+    Integer damagePercentage = 0;
 
 }
