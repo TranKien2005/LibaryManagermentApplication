@@ -4,8 +4,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.SQLException;
 
+import data.BookRepository;
+import data.DefaultAppContainer;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -16,7 +17,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.*;
-import DAO.*;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import java.util.function.Consumer;
@@ -48,6 +48,8 @@ public class AddController extends menuController {
 
     @FXML
     private TextField isbnField;
+
+    private BookRepository bookRepository;
 
     private Consumer<Document> onAddListener;
 
@@ -85,22 +87,22 @@ public class AddController extends menuController {
         // Tạo đối tượng Document mới
         Document newDocument = new Document(title, author, category, publisher, year, quantity);
 
-        try {
-            BookDao.getInstance().insert(newDocument);
-            util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được thêm thành công.",
-                    (Stage) addButton.getScene().getWindow());
-            clearFields();
-            if (onAddListener != null) {
-                onAddListener.accept(newDocument);
-            }
-
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Lỗi SQL", "Không thể thêm tài liệu do lỗi cơ sở dữ liệu: " + e.getMessage(),
-                    (Stage) addButton.getScene().getWindow());
-        } catch (Exception e) {
-            util.ErrorDialog.showError("Lỗi", "Không thể thêm tài liệu. Vui lòng thử lại: " + e.getMessage(),
-                    (Stage) addButton.getScene().getWindow());
-        }
+        bookRepository.insert(newDocument).whenComplete((document, ex) -> {
+            Platform.runLater(() -> {
+                if (ex != null) {
+                    util.ErrorDialog.showError("Lỗi", "Không thể thêm tài liệu: " + ex.getMessage(),
+                            (Stage) addButton.getScene().getWindow());
+                    ex.printStackTrace();
+                } else {
+                    util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được thêm thành công.",
+                            (Stage) addButton.getScene().getWindow());
+                    clearFields();
+                    if (onAddListener != null) {
+                        onAddListener.accept(document);
+                    }
+                }
+            });
+        });
     }
 
     private void clearFields() {
@@ -120,6 +122,7 @@ public class AddController extends menuController {
 
     @FXML
     public void initialize() {
+        bookRepository = DefaultAppContainer.getInstance().getBookRepository();
         System.out.println("AddController đã được khởi tạo");
     }
 
@@ -150,50 +153,25 @@ public class AddController extends menuController {
         }
 
         util.ThreadManager.submitSqlTask(() -> {
-
             try {
                 Document document = GoogleApiBookController.getBookInfoByISBN(isbn);
+                if (document == null) {
+                    Platform.runLater(() -> util.ErrorDialog.showError("Lỗi", "Không tìm thấy sách với ISBN này.",
+                            (Stage) addByIsbnButton.getScene().getWindow()));
+                    return;
+                }
 
-                BookDao.getInstance().insert(document);
+                bookRepository.insert(document).join();
+
                 Platform.runLater(() -> {
                     util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được thêm thành công.",
                             (Stage) addByIsbnButton.getScene().getWindow());
                     clearFields();
                     isbnField.clear();
                 });
-                Document existingDocument = BookDao.getInstance().get(BookDao.getInstance().getID(document));
-                if (existingDocument != null) {
-                    boolean updated = false;
-                    if (existingDocument.getDescription() == null || existingDocument.getDescription().isEmpty()) {
-                        existingDocument.setDescription(document.getDescription());
-                        updated = true;
-                    }
-                    if ((existingDocument.getCoverImageUrl() == null || existingDocument.getCoverImageUrl().isBlank())
-                            && document.getCoverImageUrl() != null && !document.getCoverImageUrl().isBlank()) {
-                        existingDocument.setCoverImageUrl(document.getCoverImageUrl());
-                        updated = true;
-                    }
-                    if (existingDocument.getRating() == 0) {
-                        existingDocument.setRating(document.getRating());
-                        updated = true;
-                    }
-                    if (existingDocument.getReviewCount() == 0) {
-                        existingDocument.setReviewCount(document.getReviewCount());
-                        updated = true;
-                    }
-                    if (updated) {
-                        BookDao.getInstance().update(existingDocument, existingDocument.getBookID());
-                    }
-                } else {
-                    BookDao.getInstance().insert(document);
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                Platform.runLater(() -> util.ErrorDialog.showError("Lỗi SQL", e.getMessage(),
-                        (Stage) addByIsbnButton.getScene().getWindow()));
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() -> util.ErrorDialog.showError("Lỗi", e.getMessage(),
+                Platform.runLater(() -> util.ErrorDialog.showError("Lỗi", "Không thể thêm tài liệu: " + e.getMessage(),
                         (Stage) addByIsbnButton.getScene().getWindow()));
             }
         });
@@ -240,7 +218,7 @@ public class AddController extends menuController {
                                 try {
                                     document = GoogleApiBookController.getBookInfoByISBN(currentIsbn);
                                     if (document != null) {
-                                        BookDao.getInstance().insert(document);
+                                        bookRepository.insert(document).join();
                                         check = true;
                                     } else {
                                         check = false;
