@@ -2,7 +2,6 @@ package API.user;
 
 import API.BaseHttpApi;
 import model.User;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * HTTP implementation of UserApi.

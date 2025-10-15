@@ -42,7 +42,7 @@ public class EditController extends menuController {
     }
 
     public EditController() {
-        this.bookRepository = Main.appContainer.bookRepository;
+        this.bookRepository = Main.appContainer.getBookRepository();
     }
 
     public void setOnEditSuccess(Consumer<Void> onEditSuccess) {
@@ -55,11 +55,7 @@ public class EditController extends menuController {
     @FXML
     public void initialize() {
         suggestionListView.setVisible(false);
-        try {
-            bookList = bookRepository.getAll();
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Lỗi", "Đã xảy ra lỗi khi tải danh sách sách: " + e.getMessage(), null);
-        }
+        bookList = bookRepository.getAll().join();
 
         final long[] lastTypingTime = { System.currentTimeMillis() };
         final long typingDelay = 100;
@@ -105,7 +101,7 @@ public class EditController extends menuController {
             return;
         }
         try {
-            Document document = bookRepository.get(ID);
+            Document document = bookRepository.get(ID).join();
             if (document != null) {
                 titleField.setText(document.getTitle());
                 authorField.setText(document.getAuthor());
@@ -114,8 +110,6 @@ public class EditController extends menuController {
                 yearField.setText(String.valueOf(document.getYearPublished()));
                 quantityField.setText(String.valueOf(document.getAvailableCopies()));
             }
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Lỗi", e.getMessage(), null);
         } catch (Exception e) {
             util.ErrorDialog.showError("Lỗi", e.getMessage(), null);
         }
@@ -175,8 +169,6 @@ public class EditController extends menuController {
 
         } catch (NumberFormatException e) {
             util.ErrorDialog.showError("Lỗi", "Năm và số lượng phải là số nguyên hợp lệ.", null);
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Lỗi", "Đã xảy ra lỗi khi cập nhật cơ sở dữ liệu: " + e.getMessage(), null);
         } catch (Exception e) {
             util.ErrorDialog.showError("Lỗi", "Đã xảy ra lỗi khi cập nhật tài liệu.", null);
         }

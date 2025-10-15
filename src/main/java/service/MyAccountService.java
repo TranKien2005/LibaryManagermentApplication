@@ -22,19 +22,19 @@ public class MyAccountService {
     }
 
     public User getUser(int accountId) throws SQLException {
-        return userRepository.get(accountId);
+        return userRepository.get(accountId).join();
     }
 
     public Manager getManager(int accountId) throws SQLException {
-        return managerRepository.get(accountId);
+        return managerRepository.get(accountId).join();
     }
 
     public Account getAccount(int accountId) throws SQLException {
-        return accountRepository.get(accountId);
+        return accountRepository.get(accountId).join();
     }
 
     public void updateUser(int accountId, String fullname, String phone, String email, String password) throws SQLException {
-        User user = userRepository.get(accountId);
+        User user = userRepository.get(accountId).join();
         user.setFullName(fullname);
         user.setPhone(phone);
         user.setEmail(email);
@@ -43,7 +43,7 @@ public class MyAccountService {
     }
 
     public void updateManager(int accountId, String fullname, String phone, String email, String password) throws SQLException {
-        Manager manager = managerRepository.get(accountId);
+        Manager manager = managerRepository.get(accountId).join();
         manager.setFullName(fullname);
         manager.setPhone(phone);
         manager.setEmail(email);

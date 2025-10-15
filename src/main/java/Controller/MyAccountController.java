@@ -141,7 +141,7 @@ public class MyAccountController {
             if (menuUserController.getAccountID() != 0) {
                 menuUserController.getInstance().reload();
             } else {
-                menuController.getInstance().reload();
+                menuController.getInstance().handleReload();
             }
         } catch (SQLException e) {
             ErrorDialog.showError("SQL Error", e.getMessage(), (Stage) fullnameField.getScene().getWindow());

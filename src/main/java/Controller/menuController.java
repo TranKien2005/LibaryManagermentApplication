@@ -10,6 +10,7 @@ import QR.QRScanner;
 import Main.Main;
 import data.*;
 import googleAPI.BookInfo;
+import googleAPI.GoogleApiBookController;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -341,7 +342,7 @@ public class menuController {
     }
 
     @FXML
-    private void handleReload() {
+    public void handleReload() {
         resetList();
         clearDocumentDetails();
         tvDocuments.getSelectionModel().clearSelection();

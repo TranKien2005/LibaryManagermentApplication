@@ -2,7 +2,6 @@ package API.user;
 
 import API.BaseApi;
 import model.User;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * API interface for User operations.

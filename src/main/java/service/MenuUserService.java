@@ -42,47 +42,47 @@ public class MenuUserService {
     }
 
     public List<Document> getAllBooks() throws SQLException {
-        return bookRepository.getAll();
+        return bookRepository.getAll().join();
     }
 
     public List<BorrowReturn> getBorrowReturnList(int accountId) throws SQLException {
-        return borrowReturnRepository.getByAccountId(accountId);
+        return borrowReturnRepository.getByAccountId(accountId).join();
     }
 
     public Account getAccount(int accountId) throws SQLException {
-        return accountRepository.get(accountId);
+        return accountRepository.get(accountId).join();
     }
 
     public User getUser(int accountId) throws SQLException {
-        return userRepository.get(accountId);
+        return userRepository.get(accountId).join();
     }
 
     public Manager getManager(int accountId) throws SQLException {
-        return managerRepository.get(accountId);
+        return managerRepository.get(accountId).join();
     }
 
     public void borrowDocument(int memberId, int documentId, LocalDate borrowDate, LocalDate returnDate) throws SQLException {
         Borrow newBorrow = new Borrow(memberId, documentId, borrowDate, returnDate, "Borrowed");
-        borrowRepository.add(newBorrow);
+        borrowRepository.insert(newBorrow).join();
     }
 
     public void returnDocument(int borrowId) throws SQLException {
-        Borrow selectedBorrow = borrowRepository.get(borrowId);
+        Borrow selectedBorrow = borrowRepository.get(borrowId).join();
         if (selectedBorrow == null) {
             throw new IllegalArgumentException("Borrow record not found.");
         }
 
-        Return existingReturnRecord = returnRepository.get(selectedBorrow.getBorrowID());
+        Return existingReturnRecord = returnRepository.get(selectedBorrow.getBorrowID()).join();
         if (existingReturnRecord != null) {
             throw new IllegalStateException("Document already returned.");
         }
 
         int damagePercentage = (int) (Math.random() * 100);
-        Return returnRecord = new Return(borrowRepository.getID(selectedBorrow), LocalDate.now(), damagePercentage);
-        returnRepository.add(returnRecord);
+        Return returnRecord = new Return(borrowRepository.getID(selectedBorrow).join(), LocalDate.now(), damagePercentage);
+        returnRepository.insert(returnRecord).join();
     }
 
     public Document getBook(int bookId) throws SQLException {
-        return bookRepository.get(bookId);
+        return bookRepository.get(bookId).join();
     }
 }

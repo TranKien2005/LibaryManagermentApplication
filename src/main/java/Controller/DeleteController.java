@@ -40,7 +40,7 @@ public class DeleteController extends menuController {
     }
 
     public DeleteController() {
-        this.bookRepository = Main.appContainer.bookRepository;
+        this.bookRepository = Main.appContainer.getBookRepository();
     }
 
     public List<Document> bookList = new ArrayList<>();
@@ -110,9 +110,6 @@ public class DeleteController extends menuController {
                     util.ErrorDialog.showSuccess("Xóa thành công", "Tài liệu đã được xóa.", null);
                     capNhatBangTaiLieu();
                     nameField.clear();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    util.ErrorDialog.showError("Lỗi", e.getMessage(), null);
                 } catch (Exception e) {
                     e.printStackTrace();
                     util.ErrorDialog.showError("Lỗi", e.getMessage(), null);
@@ -123,11 +120,8 @@ public class DeleteController extends menuController {
 
     private void capNhatBangTaiLieu() {
         try {
-            bookList = bookRepository.getAll();
+            bookList = bookRepository.getAll().join();
             SearchView.setItems(FXCollections.observableArrayList(bookList));
-        } catch (SQLException e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Lỗi", e.getMessage(), null);
         } catch (Exception e) {
             e.printStackTrace();
             util.ErrorDialog.showError("Lỗi", e.getMessage(), null);
@@ -162,7 +156,6 @@ public class DeleteController extends menuController {
         SearchView.setItems(FXCollections.observableArrayList(bookList));
     }
 
-    @Override
     public void reload() {
         handleCancel();
     }

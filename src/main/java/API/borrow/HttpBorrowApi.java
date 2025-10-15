@@ -2,7 +2,6 @@ package API.borrow;
 
 import API.BaseHttpApi;
 import model.Borrow;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * HTTP implementation of BorrowApi.

@@ -19,11 +19,11 @@ public class MemberManagementService {
     }
 
     public List<User> getUsers() throws SQLException {
-        return userRepository.getAll();
+        return userRepository.getAll().join();
     }
 
     public Account getAccount(int accountId) throws SQLException {
-        return accountRepository.get(accountId);
+        return accountRepository.get(accountId).join();
     }
 
     public void updateUser(User user, String newPassword) throws SQLException {

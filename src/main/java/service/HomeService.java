@@ -25,17 +25,17 @@ public class HomeService {
     }
 
     public InitialHomeContent getInitialContent(int accountId) throws SQLException {
-        List<Document> topBooks = bookRepository.getTopRatedBooks();
-        List<Document> favoriteBooks = bookRepository.getFavoriteBooksForAccount(accountId);
-        List<Document> trendingBooks = bookRepository.getTrendingBooks();
+        List<Document> topBooks = bookRepository.getTopRatedBooks().join();
+        List<Document> favoriteBooks = bookRepository.getFavorite(accountId).join();
+        List<Document> trendingBooks = bookRepository.getTrendingBooks().join();
         return new InitialHomeContent(topBooks, favoriteBooks, trendingBooks);
     }
 
     public List<Document> getNewArrivals(int page, int pageSize) throws SQLException {
-        return bookRepository.getNewArrivals(page, pageSize);
+        return bookRepository.getNewArrivals(page, pageSize).join();
     }
 
     public List<Document> search(String searchText, int page, int pageSize) throws SQLException {
-        return bookRepository.search(searchText, page, pageSize);
+        return bookRepository.search(searchText, page, pageSize).join();
     }
 }
