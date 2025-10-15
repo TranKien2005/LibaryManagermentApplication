@@ -1,6 +1,7 @@
 package data;
 
 import service.HomeService;
+import service.register.RegisterService;
 
 public class DefaultAppContainer implements AppContainer {
 
@@ -14,6 +15,7 @@ public class DefaultAppContainer implements AppContainer {
     private final ManagerRepository managerRepository = new ManagerRepository();
     private final BorrowReturnRepository borrowReturnRepository = new BorrowReturnRepository();
     private final HomeService homeService = new HomeService(bookRepository);
+    private final RegisterService registerService = new RegisterService(accountRepository, userRepository, managerRepository);
 
 
     private DefaultAppContainer() {
@@ -65,5 +67,10 @@ public class DefaultAppContainer implements AppContainer {
     @Override
     public HomeService getHomeService() {
         return homeService;
+    }
+
+    @Override
+    public RegisterService getRegisterService() {
+        return registerService;
     }
 }

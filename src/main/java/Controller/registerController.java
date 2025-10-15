@@ -1,7 +1,7 @@
 package Controller;
 
 import java.io.IOException;
-// ...existing imports...
+import Main.Main;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -11,7 +11,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
-import service.ServiceFactory;
 import service.register.RegisterService;
 
 public class registerController {
@@ -40,7 +39,11 @@ public class registerController {
     @FXML
     protected Button registerButton;
 
-    private final RegisterService registerService = ServiceFactory.getRegisterService(ServiceFactory.class.getName());
+    private final RegisterService registerService;
+
+    public registerController() {
+        this.registerService = Main.appContainer.getRegisterService();
+    }
 
     @FXML
     protected void handleRegister() {

@@ -11,4 +11,5 @@ public interface AppContainer {
     ManagerRepository getManagerRepository();
     BorrowReturnRepository getBorrowReturnRepository();
     HomeService getHomeService();
+    RegisterService getRegisterService();
 }
