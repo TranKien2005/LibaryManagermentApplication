@@ -6,7 +6,7 @@ import model.Account;
 public interface AccountRepository extends BaseRepository<Account, Integer> {
     CompletableFuture<Account> findByUsername(String username);
     
-    CompletableFuture<Boolean> isUsernameExists(String username);
+    boolean isUsernameExists(String username);
     
     CompletableFuture<Integer> add(Account account);
     

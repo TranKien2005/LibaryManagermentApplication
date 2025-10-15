@@ -17,12 +17,12 @@ public class AuthService {
     public CompletableFuture<Account> authenticate(String username, String password) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                Account account = accountRepository.findByUsername(username);
+                Account account = accountRepository.findByUsername(username).join();
                 if (account != null && account.getPassword().equals(password)) {
                     return account;
                 }
                 return null;
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
@@ -31,8 +31,8 @@ public class AuthService {
     public CompletableFuture<Account> authenticateByAccountId(int accountId) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return accountRepository.get(accountId);
-            } catch (SQLException e) {
+                return accountRepository.get(accountId).join();
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });

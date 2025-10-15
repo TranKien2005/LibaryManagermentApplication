@@ -21,7 +21,7 @@ public class AddBookService {
 
     public CompletableFuture<Document> addDocument(String title, String author, String category, String publisher, int year, int quantity) {
         Document newDocument = new Document(title, author, category, publisher, year, quantity);
-        return bookRepository.insert(newDocument);
+        return bookRepository.insert(newDocument).thenApply(v -> newDocument);
     }
 
     public CompletableFuture<Document> addBookByIsbn(String isbn) {
@@ -31,8 +31,8 @@ public class AddBookService {
                 if (document == null) {
                     throw new RuntimeException("Book not found for ISBN: " + isbn);
                 }
-                // Using join() here because we are already in a background thread supplied by supplyAsync
-                return bookRepository.insert(document).join();
+                bookRepository.insert(document).join();
+                return document;
             } catch (Exception e) {
                 throw new RuntimeException("Failed to add book by ISBN: " + e.getMessage(), e);
             }

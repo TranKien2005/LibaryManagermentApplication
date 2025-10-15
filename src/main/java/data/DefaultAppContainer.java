@@ -28,40 +28,84 @@ public class DefaultAppContainer implements AppContainer {
     private static DefaultAppContainer instance = null;
 
     // API clients
-    private final AccountApi accountApi = new HttpAccountApi("http://localhost:8080");
-    private final BookApi bookApi = new HttpBookApi("http://localhost:8080");
-    private final UserApi userApi = new HttpUserApi("http://localhost:8080");
-    private final BorrowApi borrowApi = new HttpBorrowApi("http://localhost:8080");
-    private final ReturnApi returnApi = new HttpReturnApi("http://localhost:8080");
-    private final ManagerApi managerApi = new HttpManagerApi("http://localhost:8080");
-    private final BorrowReturnApi borrowReturnApi = new HttpBorrowReturnApi("http://localhost:8080");
-    
+    private final AccountApi accountApi;
+    private final BookApi bookApi;
+    private final UserApi userApi;
+    private final BorrowApi borrowApi;
+    private final ReturnApi returnApi;
+    private final ManagerApi managerApi;
+    private final BorrowReturnApi borrowReturnApi;
+
     // Adapters
-    private final AccountRepository accountRepository = new AccountRepositoryAdapter(accountApi);
-    private final BookRepository bookRepository = new BookRepositoryAdapter(bookApi);
-    private final UserRepository userRepository = new UserRepositoryAdapter(userApi);
-    private final BorrowRepository borrowRepository = new BorrowRepositoryAdapter(borrowApi);
-    private final ReturnRepository returnRepository = new ReturnRepositoryAdapter(returnApi);
-    private final ManagerRepository managerRepository = new ManagerRepositoryAdapter(managerApi);
-    private final BorrowReturnRepository borrowReturnRepository = new BorrowReturnRepositoryAdapter(borrowReturnApi);
-    
-    private final HomeService homeService = new HomeService(bookRepository);
-    private final RegisterService registerService = new RegisterService(accountRepository, userRepository, managerRepository);
-    private final MemberManagementService memberManagementService = new MemberManagementService(userRepository, accountRepository);
-    private final MenuService menuService = new MenuService(accountRepository, userRepository, bookRepository, borrowRepository, returnRepository, managerRepository, borrowReturnRepository);
-    private final MenuUserService menuUserService = new MenuUserService(bookRepository, borrowReturnRepository, accountRepository, userRepository, managerRepository, borrowRepository, returnRepository);
-    private final MyAccountService myAccountService = new MyAccountService(userRepository, accountRepository, managerRepository);
-    private final AddBookService addBookService = new AddBookService(bookRepository);
-    private final AuthService authService = new AuthService(accountRepository);
+    private final AccountRepository accountRepository;
+    private final BookRepository bookRepository;
+    private final UserRepository userRepository;
+    private final BorrowRepository borrowRepository;
+    private final ReturnRepository returnRepository;
+    private final ManagerRepository managerRepository;
+    private final BorrowReturnRepository borrowReturnRepository;
 
+    private final HomeService homeService;
+    private final RegisterService registerService;
+    private final MemberManagementService memberManagementService;
+    private final MenuService menuService;
+    private final MenuUserService menuUserService;
+    private final MyAccountService myAccountService;
+    private final AddBookService addBookService;
+    private final AuthService authService;
 
-    private DefaultAppContainer() {
+    private DefaultAppContainer(boolean isTestEnvironment) {
+        if (isTestEnvironment) {
+            // Use mock repositories for testing
+            MockRepositoryFactory mockFactory = new MockRepositoryFactory();
+            this.accountRepository = mockFactory.createAccountRepository();
+            this.bookRepository = mockFactory.createBookRepository();
+            this.userRepository = null; // Update with mock if needed
+            this.borrowRepository = null; // Update with mock if needed
+            this.returnRepository = null; // Update with mock if needed
+            this.managerRepository = null; // Update with mock if needed
+            this.borrowReturnRepository = null; // Update with mock if needed
 
+            this.accountApi = null;
+            this.bookApi = null;
+            this.userApi = null;
+            this.borrowApi = null;
+            this.returnApi = null;
+            this.managerApi = null;
+            this.borrowReturnApi = null;
+        } else {
+            // Use real API clients for production
+            this.accountApi = new HttpAccountApi("http://localhost:8080");
+            this.bookApi = new HttpBookApi("http://localhost:8080");
+            this.userApi = new HttpUserApi("http://localhost:8080");
+            this.borrowApi = new HttpBorrowApi("http://localhost:8080");
+            this.returnApi = new HttpReturnApi("http://localhost:8080");
+            this.managerApi = new HttpManagerApi("http://localhost:8080");
+            this.borrowReturnApi = new HttpBorrowReturnApi("http://localhost:8080");
+
+            this.accountRepository = new AccountRepositoryAdapter(accountApi);
+            this.bookRepository = new BookRepositoryAdapter(bookApi);
+            this.userRepository = new UserRepositoryAdapter(userApi);
+            this.borrowRepository = new BorrowRepositoryAdapter(borrowApi);
+            this.returnRepository = new ReturnRepositoryAdapter(returnApi);
+            this.managerRepository = new ManagerRepositoryAdapter(managerApi);
+            this.borrowReturnRepository = new BorrowReturnRepositoryAdapter(borrowReturnApi);
+        }
+
+        this.homeService = new HomeService(bookRepository);
+        this.registerService = new RegisterService(accountRepository, userRepository, managerRepository);
+        this.memberManagementService = new MemberManagementService(userRepository, accountRepository);
+        this.menuService = new MenuService(accountRepository, userRepository, bookRepository, borrowRepository, returnRepository, managerRepository, borrowReturnRepository);
+        this.menuUserService = new MenuUserService(bookRepository, borrowReturnRepository, accountRepository, userRepository, managerRepository, borrowRepository, returnRepository);
+        this.myAccountService = new MyAccountService(userRepository, accountRepository, managerRepository);
+        this.addBookService = new AddBookService(bookRepository);
+        this.authService = new AuthService(accountRepository);
     }
 
     public static DefaultAppContainer getInstance() {
         if (instance == null) {
-            instance = new DefaultAppContainer();
+            boolean isTest = "test".equals(System.getProperty("env"));
+            instance = new DefaultAppContainer(isTest);
         }
         return instance;
     }
@@ -137,7 +181,7 @@ public class DefaultAppContainer implements AppContainer {
     }
 
     @Override
-    public AuthService getAuthService() {
-        return authService;
-    }
+public AuthService getAuthService() {
+    return authService;
+}
 }

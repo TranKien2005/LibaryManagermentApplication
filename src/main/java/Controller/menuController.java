@@ -218,7 +218,7 @@ public class menuController {
     }
 
     private void setupEventListeners() {
-        tvDocuments.getSelectionModel().selectedItemProperty().addListener((_, _, newSelection) -> {
+        tvDocuments.getSelectionModel().selectedItemProperty().addListener((x, y, newSelection) -> {
             if (newSelection != null) {
                 displayDocumentDetails(newSelection);
             } else {

@@ -79,7 +79,7 @@ public class HomeController {
     @FXML
     public void initialize() {
         initialContent = (Parent) scrollPaneMain.getContent();
-        tfSearch.setOnAction(_ -> handleSearch());
+        tfSearch.setOnAction(x -> handleSearch());
         loadInitialContent();
     }
 
