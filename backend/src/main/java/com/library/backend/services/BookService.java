@@ -191,5 +191,8 @@ public class BookService {
         return bookMapper.toBookDetailResponse(book);
     }
 
+    public boolean isInit() {
+        return bookRepository.count() > 0;
+    }
 
 }

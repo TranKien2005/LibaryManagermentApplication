@@ -75,5 +75,9 @@ public class ManagerService {
                 .build();
     }
 
+    public boolean isInit() {
+        return managerRepository.count() > 0;
+    }
+
 
 }

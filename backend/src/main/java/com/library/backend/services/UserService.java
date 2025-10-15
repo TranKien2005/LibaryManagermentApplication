@@ -59,4 +59,9 @@ public class UserService {
         return userMapper.toUserDetailResponse(user);
     }
 
+    public boolean isInit() {
+        long count = userRepository.count();
+        return count > 0;
+    }
+
 }

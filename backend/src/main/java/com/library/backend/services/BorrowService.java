@@ -10,6 +10,7 @@ import com.library.backend.entities.Student;
 import com.library.backend.exceptions.GeneralException;
 import com.library.backend.exceptions.ResponseCode;
 import com.library.backend.mappers.BorrowMapper;
+import com.library.backend.repositories.BookRepository;
 import com.library.backend.repositories.BorrowRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class BorrowService {
 
     BorrowRepository borrowRepository;
     BorrowMapper borrowMapper;
+    BookRepository bookRepository;
 
     public List<BorrowDetailResponse> getAll() {
         List<Borrow> borrows = borrowRepository.findAll();
@@ -33,6 +35,13 @@ public class BorrowService {
     }
 
     public BorrowDetailResponse create(BorrowCreationRequest request) {
+        Book book = bookRepository.findById(request.getBookId())
+                .orElseThrow(() -> new GeneralException(ResponseCode.BOOK_NOT_FOUND));
+        if (book.getAvailableCopies() == 0) {
+            throw new GeneralException(ResponseCode.NOT_ENOUGH_BOOK);
+        }
+        book.setAvailableCopies(book.getAvailableCopies() - 1);
+        bookRepository.save(book);
         Borrow borrow = borrowMapper.toBorrow(request);
         borrow.setStudent(Student.builder().userId(request.getStudentId()).build());
         borrow.setBook(Book.builder().id(request.getBookId()).build());
@@ -78,6 +87,10 @@ public class BorrowService {
 
     public boolean isBorrowed(Integer studentId, Integer bookId) {
         return borrowRepository.existsByStudentUserIdAndBookIdAndStatus(studentId, bookId, Borrow.Type.Borrowed);
+    }
+
+    public boolean isInit() {
+        return borrowRepository.count() > 0;
     }
 
 }

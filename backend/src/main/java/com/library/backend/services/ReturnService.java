@@ -3,11 +3,14 @@ package com.library.backend.services;
 import com.library.backend.dtos.requests.ReturnCreationRequest;
 import com.library.backend.dtos.requests.ReturnUpdateRequest;
 import com.library.backend.dtos.responses.ReturnDetailResponse;
+import com.library.backend.entities.Book;
 import com.library.backend.entities.Borrow;
 import com.library.backend.entities.Return;
 import com.library.backend.exceptions.GeneralException;
 import com.library.backend.exceptions.ResponseCode;
 import com.library.backend.mappers.ReturnMapper;
+import com.library.backend.repositories.BookRepository;
+import com.library.backend.repositories.BorrowRepository;
 import com.library.backend.repositories.ReturnRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,8 @@ public class ReturnService {
 
     ReturnRepository returnRepository;
     ReturnMapper returnMapper;
+    BorrowRepository borrowRepository;
+    BookRepository bookRepository;
 
     public ReturnDetailResponse getById(Integer id) {
         Return r = returnRepository.findById(id)
@@ -32,9 +37,16 @@ public class ReturnService {
     }
 
     public ReturnDetailResponse create(ReturnCreationRequest request) {
+        Borrow borrow = borrowRepository.findById(request.getBorrowId())
+                .orElseThrow(() -> new GeneralException(ResponseCode.BORROW_NOT_FOUND));
+        borrow.setStatus(Borrow.Type.Returned);
+        borrowRepository.save(borrow);
+        Book book = borrow.getBook();
+        book.setAvailableCopies(book.getAvailableCopies() + 1);
+        bookRepository.save(book);
         Return r = returnMapper.toReturn(request);
         r.setReturnDate(LocalDate.now());
-        r.setBorrow(Borrow.builder().id(request.getBorrowId()).build());
+        r.setBorrow(borrow);
         r = returnRepository.save(r);
         return returnMapper.toReturnDetailResponse(r);
     }
@@ -59,6 +71,10 @@ public class ReturnService {
 
     public void delete(Integer id) {
         returnRepository.deleteById(id);
+    }
+
+    public boolean isInit() {
+        return returnRepository.count() > 0;
     }
 
 }

@@ -74,6 +74,10 @@ public class StudentService {
                 .build();
     }
 
+    public boolean isInit() {
+        return studentRepository.count() > 0;
+    }
+
 
 
 }
