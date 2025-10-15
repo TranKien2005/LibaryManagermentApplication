@@ -27,15 +27,12 @@ public class Book {
 
     Integer yearPublished;
 
-    @Column(nullable = false)
     Integer availableCopies = 0;
 
     String description;
 
-    @Column(nullable = false)
     Double rating = 0.0;
 
-    @Column(nullable = false)
     Integer reviewCount = 0;
 
     String coverImageUrl;
