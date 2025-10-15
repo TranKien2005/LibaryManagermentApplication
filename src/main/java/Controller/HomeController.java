@@ -1,6 +1,11 @@
 package Controller;
 
-import service.BookService;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
+
+import Main.Main;
+import service.HomeService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -15,10 +20,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import model.Document;
 import util.ErrorDialog;
-import java.io.IOException;
-// removed unused InputStream import
-import java.sql.SQLException;
-import java.util.List;
 
 public class HomeController {
 
@@ -49,7 +50,7 @@ public class HomeController {
     @FXML
     private VBox trendingBooksSection;
 
-    private BookService bookService = BookService.getInstance();
+    private final HomeService homeService;
     private int newArrivalsPage = 0;
     private int searchPage = 0;
     private static final int PAGE_SIZE = 14;
@@ -63,6 +64,10 @@ public class HomeController {
     private static HomeController instance;
 
     private Parent initialContent;
+
+    public HomeController() {
+        this.homeService = Main.appContainer.getHomeService();
+    }
 
     public static HomeController getInstance() {
         if (instance == null) {
@@ -80,14 +85,15 @@ public class HomeController {
 
     private void loadInitialContent() {
         try {
-            topBooks = bookService.getTopRatedBooks();
             int favAccountId = 2; // fallback account id when not logged in
             model.Account current = service.AppCache.getInstance().getCurrentAccount();
             if (current != null) {
                 favAccountId = current.getAccountID();
             }
-            favoriteBooks = bookService.getFavoriteBooksForAccount(favAccountId);
-            trendingBooks = bookService.getTrendingBooks();
+            HomeService.InitialHomeContent initialData = homeService.getInitialContent(favAccountId);
+            topBooks = initialData.topBooks;
+            favoriteBooks = initialData.favoriteBooks;
+            trendingBooks = initialData.trendingBooks;
 
             fpTopBooks.getChildren().clear();
             for (Document book : topBooks) {
@@ -192,7 +198,7 @@ public class HomeController {
     }
 
     private void loadMoreSearchResults() throws SQLException {
-    List<Document> searchResults = bookService.searchNewArrivals(currentSearchText, searchPage, PAGE_SIZE_SEARCH);
+    List<Document> searchResults = homeService.search(currentSearchText, searchPage, PAGE_SIZE_SEARCH);
 
         if (searchResults.isEmpty()) {
             throw new SQLException("No more search results to load.");
@@ -206,7 +212,7 @@ public class HomeController {
     }
 
     private void loadMoreNewArrivals() throws SQLException {
-    List<Document> newArrivals = bookService.getNewArrivals(newArrivalsPage, PAGE_SIZE);
+    List<Document> newArrivals = homeService.getNewArrivals(newArrivalsPage, PAGE_SIZE);
         if (newArrivals.isEmpty()) {
             throw new SQLException("No more new arrivals to load.");
         }
