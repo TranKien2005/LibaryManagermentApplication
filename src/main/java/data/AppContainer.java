@@ -14,4 +14,5 @@ public interface AppContainer {
     RegisterService getRegisterService();
     MemberManagementService getMemberManagementService();
     MenuUserService getMenuUserService();
+    MyAccountService getMyAccountService();
 }
