@@ -8,9 +8,7 @@ import javax.imageio.ImageIO;
 
 import com.google.zxing.WriterException;
 
-import DAO.AccountDao;
-import DAO.ManagerDao;
-import DAO.UserDao;
+import Main.Main;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
@@ -22,6 +20,7 @@ import javafx.stage.Stage;
 import model.Account;
 import model.Manager;
 import model.User;
+import service.MyAccountService;
 import util.ErrorDialog;
 
 public class MyAccountController {
@@ -42,6 +41,11 @@ public class MyAccountController {
     @FXML
     private PasswordField passwordField;
 
+    private final MyAccountService myAccountService;
+
+    public MyAccountController() {
+        this.myAccountService = Main.appContainer.getMyAccountService();
+    }
 
     @FXML
     public void initialize() {
@@ -49,8 +53,8 @@ public class MyAccountController {
         try {
             if (menuUserController.getAccountID() != 0) {
                 accountID = menuUserController.getAccountID();
-                User user = UserDao.getInstance().get(accountID);
-                Account account = AccountDao.getInstance().get(accountID);
+                User user = myAccountService.getUser(accountID);
+                Account account = myAccountService.getAccount(accountID);
                 fullnameField.setText(user.getFullName());
                 phoneField.setText(user.getPhone());
                 emailField.setText(user.getEmail());
@@ -59,8 +63,8 @@ public class MyAccountController {
             } else {
                 menuController.getInstance();
                 accountID = menuController.getAccountID();
-                Manager user = ManagerDao.getInstance().get(accountID);
-                Account account = AccountDao.getInstance().get(accountID);
+                Manager user = myAccountService.getManager(accountID);
+                Account account = myAccountService.getAccount(accountID);
                 fullnameField.setText(user.getFullName());
                 phoneField.setText(user.getPhone());
                 emailField.setText(user.getEmail());
@@ -127,23 +131,9 @@ public class MyAccountController {
 
         try {
             if (menuUserController.getAccountID() != 0) {
-                User user = UserDao.getInstance().get(accountID);
-                Account account = AccountDao.getInstance().get(accountID);
-                user.setFullName(fullnameField.getText());
-                user.setPhone(phoneField.getText());
-                user.setEmail(emailField.getText());
-                account.setPassword(passwordField.getText());
-                UserDao.getInstance().update(user, accountID);
-                AccountDao.getInstance().updatePassword(accountID, passwordField.getText());
+                myAccountService.updateUser(accountID, fullnameField.getText(), phoneField.getText(), emailField.getText(), passwordField.getText());
             } else {
-                Manager manager = ManagerDao.getInstance().get(accountID);
-                Account account = AccountDao.getInstance().get(accountID);
-                manager.setFullName(fullnameField.getText());
-                manager.setPhone(phoneField.getText());
-                manager.setEmail(emailField.getText());
-                account.setPassword(passwordField.getText());
-                ManagerDao.getInstance().update(manager, accountID);
-                AccountDao.getInstance().updatePassword(accountID, passwordField.getText());
+                myAccountService.updateManager(accountID, fullnameField.getText(), phoneField.getText(), emailField.getText(), passwordField.getText());
             }
 
             ErrorDialog.showSuccess("Success", "Account updated successfully.",
@@ -151,7 +141,7 @@ public class MyAccountController {
             if (menuUserController.getAccountID() != 0) {
                 menuUserController.getInstance().reload();
             } else {
-                menuController.getInstance().reload();
+                menuController.getInstance().handleReload();
             }
         } catch (SQLException e) {
             ErrorDialog.showError("SQL Error", e.getMessage(), (Stage) fullnameField.getScene().getWindow());

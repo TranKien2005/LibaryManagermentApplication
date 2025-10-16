@@ -1,36 +1,42 @@
 package DAO;
+
+import data.AccountRepository;
+import data.TestAppContainer;
 import model.Account;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertNotNull;
 
 public class AccountDaoTest {
-    private AccountDao accountDao;
+    private AccountRepository accountRepository;
 
     @Before
     public void setUp() {
-        accountDao = AccountDao.getInstance();
+        // Use the TestAppContainer to get the mock repository
+        TestAppContainer appContainer = new TestAppContainer();
+        accountRepository = appContainer.getAccountRepository();
     }
 
     @Test
-    public void testGetAll() throws SQLException {
-        List<Account> accounts = accountDao.getAll();
-        assertNotNull(accounts);
-        // Thêm các kiểm tra khác nếu cần
-    }
-
-    @Test
-    public void testInsert() throws SQLException {
+    public void testGetAll() throws ExecutionException, InterruptedException {
+        // Add a dummy account to the mock repository
         Account account = new Account(1, "username7", "password", "user");
-        try {
-            accountDao.insert(account);
-            // Kiểm tra xem tài khoản đã được thêm thành công
-        } catch (SQLException e) {
-            // Xử lý ngoại lệ nếu cần
-        }
+        accountRepository.add(account).get();
+
+        // Test the getAll method
+        List<Account> accounts = accountRepository.getAll().get();
+        assertNotNull(accounts);
     }
-} 
+
+    @Test
+    public void testInsert() throws ExecutionException, InterruptedException {
+        Account account = new Account(1, "username7", "password", "user");
+        // Test the add method
+        accountRepository.add(account).get();
+        // You could add an assertion here to verify the account was added
+    }
+}

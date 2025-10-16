@@ -9,7 +9,7 @@ import java.util.concurrent.Future;
 import model.User;
 import util.ThreadManager;
 
-public class UserDao {
+public class UserDao implements BaseDao<model.User, Integer> {
     private static UserDao instance;
 
     private UserDao() {
@@ -73,7 +73,7 @@ public class UserDao {
         }
     }
 
-    public void update(User user, int id) throws SQLException, IllegalArgumentException {
+    public void update(User user, Integer id) throws SQLException, IllegalArgumentException {
 
         String query = "UPDATE User SET FullName = ?, Email = ?, Phone = ? WHERE AccountID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -88,7 +88,7 @@ public class UserDao {
         }
     }
 
-    public void delete(int id) throws SQLException {
+    public void delete(Integer id) throws SQLException {
         String query = "DELETE FROM User WHERE AccountID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -99,7 +99,7 @@ public class UserDao {
         }
     }
 
-    public User get(int id) throws SQLException {
+    public User get(Integer id) throws SQLException {
         String query = "SELECT * FROM User WHERE AccountID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -119,7 +119,7 @@ public class UserDao {
         return null;
     }
 
-    public int getID(User user) throws SQLException {
+    public Integer getID(User user) throws SQLException {
         String query = "SELECT AccountID FROM User WHERE FullName = ? AND Email = ? AND Phone = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {

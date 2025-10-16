@@ -13,7 +13,7 @@ import java.util.concurrent.Future;
 import util.*;
 import model.*;
 
-public class BorrowReturnDAO {
+public class BorrowReturnDAO implements ReadOnlyDao<BorrowReturn, Integer> {
 
     // Phương thức để lấy tất cả các bản ghi từ view BorrowReturnList
     private static BorrowReturnDAO instance;
@@ -34,7 +34,7 @@ public class BorrowReturnDAO {
         return instance;
     }
 
-    public List<BorrowReturn> getAll() {
+    public List<BorrowReturn> getAll() throws SQLException {
         List<BorrowReturn> borrowReturns = new ArrayList<>();
         String query = "SELECT * FROM BorrowReturnList";
         Future<?> future = ThreadManager.submitSqlTask(() -> {
@@ -59,20 +59,21 @@ public class BorrowReturnDAO {
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
-                throw new RuntimeException("Error retrieving borrow/return records" + e.getMessage(), e);
+                // wrap in runtime so the threaded task can report via ExecutionException
+                throw new RuntimeException("Error retrieving borrow/return records: " + e.getMessage(), e);
             }
         });
         try {
             future.get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
-            throw new RuntimeException("Error executing SQL task: " + e.getMessage(), e);
+            throw new SQLException("Error executing SQL task: " + e.getMessage(), e);
         }
 
         return borrowReturns;
     }
 
-    public List<BorrowReturn> getByAccountId(int accountId) {
+    public List<BorrowReturn> getByAccountId(Integer accountId) {
         List<BorrowReturn> borrowReturns = new ArrayList<>();
         String query = "SELECT * FROM BorrowReturnList WHERE SUBSTRING_INDEX(Member, ' - ', 1) = ?";
         Future<?> future = ThreadManager.submitSqlTask(() -> {
@@ -96,23 +97,20 @@ public class BorrowReturnDAO {
                         borrowReturns.add(borrowReturn);
                     }
                 }
-            } catch (SQLException e) {
-
-                throw new RuntimeException("Error retrieving borrow/return records by account ID: " + e.getMessage(),
-                        e);
-            }
+                    } catch (SQLException e) {
+                        throw new RuntimeException("Error retrieving borrow/return records by account ID: " + e.getMessage(), e);
+                    }
         });
         try {
             future.get();
         } catch (InterruptedException | ExecutionException e) {
-
             throw new RuntimeException("Error executing SQL task: " + e.getMessage(), e);
         }
 
         return borrowReturns;
     }
 
-    public boolean isBorrowed(int accountId, int bookId) {
+    public boolean isBorrowed(Integer accountId, Integer bookId) {
         String query = "SELECT * FROM BorrowReturnList WHERE SUBSTRING_INDEX(Member, ' - ', 1) = ? AND SUBSTRING_INDEX(Book, ' - ', 1) = ? AND Status = 'Borrowed'";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement statement = conn.prepareStatement(query)) {
@@ -127,21 +125,75 @@ public class BorrowReturnDAO {
         }
     }
 
-    public int getID(int accountId, int bookId) {
+    public Integer getID(Integer accountId, Integer bookId) {
         String query = "SELECT BorrowID FROM BorrowReturnList WHERE SUBSTRING_INDEX(Member, ' - ', 1) = ? AND SUBSTRING_INDEX(Book, ' - ', 1) = ? AND Status = 'Borrowed'";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement statement = conn.prepareStatement(query)) {
             statement.setInt(1, accountId);
             statement.setInt(2, bookId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getInt("BorrowID");
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    if (resultSet.next()) {
+                        return resultSet.getInt("BorrowID");
+                    }
                 }
-            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return -1;
+    }
+
+    @Override
+    public BorrowReturn get(Integer id) throws SQLException {
+        String query = "SELECT * FROM BorrowReturnList WHERE BorrowID = ?";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int borrowID = rs.getInt("BorrowID");
+                    String member = rs.getString("Member");
+                    String book = rs.getString("Book");
+                    Date borrowDate = rs.getDate("BorrowDate");
+                    Date expectedReturnDate = rs.getDate("ExpectedReturnDate");
+                    String status = rs.getString("Status");
+                    Date returnDate = rs.getDate("ReturnDate");
+                    int damagePercentage = rs.getInt("DamagePercentage");
+                    int penaltyFee = rs.getInt("PenaltyFee");
+
+                    return new BorrowReturn(borrowID, member, book, borrowDate, expectedReturnDate, status, returnDate,
+                            damagePercentage, penaltyFee);
+                }
+            }
+        } catch (SQLException e) {
+            throw new SQLException("Error retrieving borrow/return by ID: " + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    @Override
+    public Integer getID(BorrowReturn t) throws SQLException {
+        // Try to find by BorrowID if present on object
+        try {
+            return t.getBorrowID();
+        } catch (Exception ex) {
+            throw new SQLException("Cannot determine ID from BorrowReturn object", ex);
+        }
+    }
+
+    @Override
+    public List<Integer> getAllID() throws SQLException {
+        List<Integer> ids = new ArrayList<>();
+        String query = "SELECT BorrowID FROM BorrowReturnList";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query);
+                ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                ids.add(rs.getInt("BorrowID"));
+            }
+        } catch (SQLException e) {
+            throw new SQLException("Error retrieving all BorrowIDs: " + e.getMessage(), e);
+        }
+        return ids;
     }
 
 }

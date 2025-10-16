@@ -1,10 +1,5 @@
 package model;
 
-import java.io.InputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.net.HttpURLConnection;
-
 public final class Document {
     private String title;
     private String author;
@@ -16,7 +11,7 @@ public final class Document {
     private String description;
     private double rating;
     private int reviewCount;
-    private InputStream coverImage;
+    private String coverImageUrl;
 
     public Document(String title, String author, String category, String publisher, int yearPublished,
             int availableCopies) {
@@ -116,25 +111,11 @@ public final class Document {
         this.reviewCount = reviewCount;
     }
 
-    public InputStream getCoverImage() {
-        return coverImage;
+    public String getCoverImageUrl() {
+        return coverImageUrl;
     }
 
-    public void setCoverImage(InputStream coverImage) {
-        this.coverImage = coverImage;
-    }
-
-    public void setCoverImageByUrl(String urlString) throws IOException {
-        @SuppressWarnings("deprecation")
-        URL url = new URL(urlString);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-        connection.connect();
-        if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-            InputStream inputStream = connection.getInputStream();
-            setCoverImage(inputStream);
-        } else {
-            throw new IOException("Failed to fetch image from URL: " + connection.getResponseMessage());
-        }
+    public void setCoverImageUrl(String coverImageUrl) {
+        this.coverImageUrl = coverImageUrl;
     }
 }

@@ -13,6 +13,10 @@ public class User {
         this.phone = phone;
     }
 
+    public User(String fullName2, String email2, String phone2, int accountId2) {
+        //TODO Auto-generated constructor stub
+    }
+
     // Getters and setters
     public int getAccountID() {
         return accountID;

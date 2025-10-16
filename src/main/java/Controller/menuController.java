@@ -1,58 +1,49 @@
 package Controller;
 
-import java.io.File;
-import java.io.InputStream;
-import java.sql.SQLException;
-
-import javafx.scene.control.Label;
-
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import DAO.*;
 import QR.QRScanner;
+import Main.Main;
+import data.*;
+import googleAPI.BookInfo;
+import googleAPI.GoogleApiBookController;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
 import model.*;
+import service.MenuService;
 import util.ErrorDialog;
 import util.ThreadManager;
-import javafx.stage.Stage;
-import javafx.scene.Scene;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-
-import java.io.IOException;
-
-import googleAPI.*;
-import javafx.stage.FileChooser;
 
 public class menuController {
     private static menuController instance;
     private static int accountID;
-    public static List<Document> bookList = new ArrayList<>();
-    public static List<User> userList = new ArrayList<>();
-    public static List<BorrowReturn> borrowReturnList = new ArrayList<>();
-    public static List<Account> accountList = new ArrayList<>();
+    public List<Document> bookList = new ArrayList<>();
+    public List<User> userList = new ArrayList<>();
+    public List<BorrowReturn> borrowReturnList = new ArrayList<>();
+
     private MyAccountController myAccountController;
     private AddController addController;
     private DeleteController deleteController;
     private EditController editController;
     private MemberManagementController memberManagementController;
+    private MenuService menuService;
+
     public Image defaulImage = new Image(getClass().getResourceAsStream("/images/menu/coverArtUnknown.png"));
 
     public static int getAccountID() {
@@ -71,16 +62,16 @@ public class menuController {
     }
 
     public void resetList() {
-        try {
-            bookList = BookDao.getInstance().getAll();
-            userList = UserDao.getInstance().getAll();
-            borrowReturnList = BorrowReturnDAO.getInstance().getAll();
-            accountList = AccountDao.getInstance().getAll();
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Database Error", e.getMessage(), null);
-        } catch (Exception e) {
-            util.ErrorDialog.showError("Error", e.getMessage(), null);
-        }
+        menuService.loadInitialData().whenComplete((initialData, ex) -> {
+            if (ex != null) {
+                Platform.runLater(() -> ErrorDialog.showError("Database Error", ex.getMessage(), null));
+            } else {
+                this.bookList = initialData.books;
+                this.userList = initialData.users;
+                this.borrowReturnList = initialData.borrowReturns;
+                Platform.runLater(this::populateUI);
+            }
+        });
     }
 
     @FXML
@@ -190,34 +181,23 @@ public class menuController {
 
     @FXML
     private void initialize() {
-
         instance = this;
+        setupServices();
+        setupTableColumns();
+        setupEventListeners();
+        loadSubscenes();
 
-        try {
-            Account account = AccountDao.getInstance().get(accountID);
-            if (account != null) {
-                if (account.getAccountType().equals("User")) {
-                    User currentUser = UserDao.getInstance().get(accountID);
-                    if (currentUser != null) {
-                        userName.setText("User: " + currentUser.getFullName());
-                    }
-                } else {
-                    Manager currentUser = ManagerDao.getInstance().get(accountID);
-                    if (currentUser != null) {
-                        userName.setText("Manager: " + currentUser.getFullName());
-                    }
-                }
-            }
-            resetList();
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Database Error", e.getMessage(), null);
-        } catch (Exception e) {
-            util.ErrorDialog.showError("Error", e.getMessage(), null);
-        }
+        menuService.getAccountDisplayName(accountID).thenAccept(name -> Platform.runLater(() -> userName.setText(name)));
+        resetList();
 
         dpBorrowDate.setValue(LocalDate.now());
+    }
 
-        // Khởi tạo các cột cho TableView
+    private void setupServices() {
+        menuService = Main.appContainer.getMenuService();
+    }
+
+    private void setupTableColumns() {
         colId.setCellValueFactory(new PropertyValueFactory<>("bookID"));
         colName.setCellValueFactory(new PropertyValueFactory<>("title"));
         colAuthor.setCellValueFactory(new PropertyValueFactory<>("author"));
@@ -226,87 +206,6 @@ public class menuController {
         colYear.setCellValueFactory(new PropertyValueFactory<>("yearPublished"));
         colQuantity.setCellValueFactory(new PropertyValueFactory<>("availableCopies"));
 
-        Platform.runLater(() -> tvDocuments.setItems(FXCollections.observableArrayList(bookList)));
-
-        // Thêm listener cho việc chọn tài liệu
-        tvDocuments.getSelectionModel().selectedItemProperty().addListener((_, _, newSelection) -> {
-            taDocumentDetails.clear();
-            reviewTextArea.clear();
-            scoreLabel.setText("");
-            reviewCountLabel.setText("");
-            bookCoverImageView.setImage(null);
-            if (newSelection != null) {
-
-                InputStream imageStream = newSelection.getCoverImage();
-
-                reviewTextArea.setText(newSelection.getDescription());
-                scoreLabel.setText(String.valueOf(newSelection.getRating()));
-                reviewCountLabel.setText(String.valueOf(newSelection.getReviewCount()));
-                if (imageStream != null) {
-                    Image image = new Image(imageStream);
-                    try {
-                        imageStream.reset();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    bookCoverImageView.setImage(image);
-
-                } else {
-                    bookCoverImageView.setImage(defaulImage);
-                }
-            }
-
-        });
-
-        Platform.runLater(() -> {
-
-            if (userList != null) {
-                cbMembers.getItems().addAll(userList.stream()
-                        .map(user -> user.getAccountID() + " - " + user.getFullName())
-                        .collect(Collectors.toList()));
-            }
-
-            if (bookList != null) {
-                cbDocuments.getItems().addAll(bookList.stream()
-                        .map(document -> document.getBookID() + " - " + document.getTitle())
-                        .collect(Collectors.toList()));
-            }
-        });
-
-        cbMembers.setOnKeyPressed(event -> {
-            switch (event.getCode()) {
-                case ENTER:
-                    String newText = cbMembers.getEditor().getText().toLowerCase();
-                    ObservableList<String> filteredList = FXCollections.observableArrayList(userList.stream()
-                            .map(user -> user.getAccountID() + " - " + user.getFullName())
-                            .filter(name -> name.toLowerCase().contains(newText))
-                            .collect(Collectors.toList()));
-                    cbMembers.setItems(filteredList);
-                    cbMembers.show();
-                    break;
-                default:
-
-            }
-        });
-
-        cbDocuments.setOnKeyPressed(event -> {
-            switch (event.getCode()) {
-                case ENTER:
-                    String newText = cbDocuments.getEditor().getText().toLowerCase();
-                    ObservableList<String> filteredList = FXCollections.observableArrayList(bookList.stream()
-                            .map(document -> document.getBookID() + " - " + document.getTitle())
-                            .filter(title -> title.toLowerCase().contains(newText))
-                            .collect(Collectors.toList()));
-                    cbDocuments.setItems(filteredList);
-                    cbDocuments.show();
-                    break;
-                default:
-                    break;
-            }
-        });
-
-        loadBorrowedDocuments();
-        // Initialize borrowed documents table
         colBorrowId.setCellValueFactory(new PropertyValueFactory<>("borrowID"));
         colMember.setCellValueFactory(new PropertyValueFactory<>("member"));
         colDocument.setCellValueFactory(new PropertyValueFactory<>("book"));
@@ -316,65 +215,102 @@ public class menuController {
         colActualReturnDate.setCellValueFactory(new PropertyValueFactory<>("returnDate"));
         colDamagePercentage.setCellValueFactory(new PropertyValueFactory<>("damagePercentage"));
         colPenaltyFee.setCellValueFactory(new PropertyValueFactory<>("penaltyFee"));
+    }
 
-        Platform.runLater(() -> tvBorrowedDocuments.setItems(FXCollections.observableArrayList(borrowReturnList)));
+    private void setupEventListeners() {
+        tvDocuments.getSelectionModel().selectedItemProperty().addListener((x, y, newSelection) -> {
+            if (newSelection != null) {
+                displayDocumentDetails(newSelection);
+            } else {
+                clearDocumentDetails();
+            }
+        });
 
-        // add subscene
-        // Tải và thêm các cảnh phụ vào managementStackPane
+        // Simplified ComboBox filtering
+        cbMembers.setOnKeyReleased(event -> filterComboBox(cbMembers, userList.stream().map(u -> u.getAccountID() + " - " + u.getFullName()).collect(Collectors.toList())));
+        cbDocuments.setOnKeyReleased(event -> filterComboBox(cbDocuments, bookList.stream().map(d -> d.getBookID() + " - " + d.getTitle()).collect(Collectors.toList())));
+    }
+
+    private void filterComboBox(ComboBox<String> comboBox, List<String> originalItems) {
+        String filter = comboBox.getEditor().getText().toLowerCase();
+        ObservableList<String> filteredList = originalItems.stream()
+                .filter(item -> item.toLowerCase().contains(filter))
+                .collect(Collectors.toCollection(FXCollections::observableArrayList));
+        comboBox.setItems(filteredList);
+        comboBox.show();
+    }
+
+    private void displayDocumentDetails(Document doc) {
+        reviewTextArea.setText(doc.getDescription());
+        scoreLabel.setText(String.valueOf(doc.getRating()));
+        reviewCountLabel.setText(String.valueOf(doc.getReviewCount()));
+        String imageUrl = doc.getCoverImageUrl();
+        if (imageUrl != null && !imageUrl.isBlank()) {
+            try {
+                Image image = new Image(imageUrl, 120, 180, true, true, true);
+                bookCoverImageView.setImage(image);
+            } catch (Exception e) {
+                bookCoverImageView.setImage(defaulImage);
+            }
+        } else {
+            bookCoverImageView.setImage(defaulImage);
+        }
+    }
+
+    private void clearDocumentDetails() {
+        taDocumentDetails.clear();
+        reviewTextArea.clear();
+        scoreLabel.setText("");
+        reviewCountLabel.setText("");
+        bookCoverImageView.setImage(null);
+    }
+
+    private void loadSubscenes() {
         try {
-
             FXMLLoader addBookLoader = new FXMLLoader(getClass().getResource("/view/add.fxml"));
-            Parent addBookPane = addBookLoader.load();
-            managementStackPane.getChildren().add(addBookPane);
+            managementStackPane.getChildren().add(addBookLoader.load());
             addController = addBookLoader.getController();
 
             FXMLLoader deleteBookLoader = new FXMLLoader(getClass().getResource("/view/delete.fxml"));
-            Parent deleteBookPane = deleteBookLoader.load();
-            managementStackPane.getChildren().add(deleteBookPane);
+            managementStackPane.getChildren().add(deleteBookLoader.load());
             deleteController = deleteBookLoader.getController();
 
             FXMLLoader editBookLoader = new FXMLLoader(getClass().getResource("/view/edit.fxml"));
-            Parent editBookPane = editBookLoader.load();
-            managementStackPane.getChildren().add(editBookPane);
+            managementStackPane.getChildren().add(editBookLoader.load());
             editController = editBookLoader.getController();
 
             FXMLLoader manageMembersLoader = new FXMLLoader(getClass().getResource("/view/member_management.fxml"));
-            Parent manageMembersPane = manageMembersLoader.load();
-            managementStackPane.getChildren().add(manageMembersPane);
+            managementStackPane.getChildren().add(manageMembersLoader.load());
             memberManagementController = manageMembersLoader.getController();
 
             FXMLLoader myAccountLoader = new FXMLLoader(getClass().getResource("/view/myAccount.fxml"));
-            Parent myAccountPane = myAccountLoader.load();
-            stackPane.getChildren().add(myAccountPane);
+            stackPane.getChildren().add(myAccountLoader.load());
             myAccountController = myAccountLoader.getController();
 
             showDocumentListTab();
-
         } catch (IOException e) {
             e.printStackTrace();
-            util.ErrorDialog.showError("Lỗi", "Không thể tải subscene: " + e.getMessage(), null);
+            ErrorDialog.showError("Lỗi", "Không thể tải subscene: " + e.getMessage(), null);
             Platform.exit();
         }
-
     }
 
-    private void loadBorrowedDocuments() {
-        ObservableList<BorrowReturn> observableBorrowedDocuments = FXCollections.observableArrayList(borrowReturnList);
-        tvBorrowedDocuments.setItems(observableBorrowedDocuments);
-    }
+    private void populateUI() {
+        tvDocuments.setItems(FXCollections.observableArrayList(bookList));
+        tvBorrowedDocuments.setItems(FXCollections.observableArrayList(borrowReturnList));
 
-    private void refreshDocumentList() {
-        ObservableList<Document> updatedBookList = FXCollections.observableArrayList(bookList);
-        tvDocuments.setItems(updatedBookList);
+        List<String> memberNames = userList.stream().map(user -> user.getAccountID() + " - " + user.getFullName()).collect(Collectors.toList());
+        cbMembers.setItems(FXCollections.observableArrayList(memberNames));
+
+        List<String> documentTitles = bookList.stream().map(doc -> doc.getBookID() + " - " + doc.getTitle()).collect(Collectors.toList());
+        cbDocuments.setItems(FXCollections.observableArrayList(documentTitles));
     }
 
     @FXML
     private void showDocumentListTab() {
         stackPane.getChildren().forEach(node -> node.setVisible(false));
         documentTab.setVisible(true);
-
         handleReload();
-
     }
 
     @FXML
@@ -406,363 +342,127 @@ public class menuController {
     }
 
     @FXML
-    private void onAddDocument() {
-        try {
-            FXMLLoader addBookLoader = new FXMLLoader(getClass().getResource("/view/add.fxml"));
-            Parent addBookPane = addBookLoader.load();
-            managementStackPane.getChildren().set(1, addBookPane);
-        } catch (IOException e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Lỗi", "Không thể tải subscene: " + e.getMessage(), null);
-            Platform.exit();
-        }
-        showPane(1);
-    }
-
-    @FXML
-    private void onDeleteDocument() {
-        try {
-            FXMLLoader deleteBookLoader = new FXMLLoader(getClass().getResource("/view/delete.fxml"));
-            Parent deleteBookPane = deleteBookLoader.load();
-            managementStackPane.getChildren().set(2, deleteBookPane);
-        } catch (IOException e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Lỗi", "Không thể tải subscene: " + e.getMessage(), null);
-            Platform.exit();
-        }
-        showPane(2);
-    }
-
-    @FXML
-    private void onEditDocument() {
-        try {
-            FXMLLoader editBookLoader = new FXMLLoader(getClass().getResource("/view/edit.fxml"));
-            Parent editBookPane = editBookLoader.load();
-            managementStackPane.getChildren().set(3, editBookPane);
-        } catch (IOException e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Lỗi", "Không thể tải subscene: " + e.getMessage(), null);
-            Platform.exit();
-        }
-        showPane(3);
-    }
-
-    @FXML
-    private void onManageMembers() {
-        try {
-            FXMLLoader manageMembersLoader = new FXMLLoader(getClass().getResource("/view/member_management.fxml"));
-            Parent manageMembersPane = manageMembersLoader.load();
-            managementStackPane.getChildren().set(4, manageMembersPane);
-        } catch (IOException e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Lỗi", "Không thể tải subscene: " + e.getMessage(), null);
-            Platform.exit();
-        }
-        showPane(4);
-    }
-
-    @FXML
-    private void handleReload() {
+    public void handleReload() {
         resetList();
-        refreshDocumentList();
-        loadBorrowedDocuments();
+        clearDocumentDetails();
         tvDocuments.getSelectionModel().clearSelection();
-        taDocumentDetails.clear();
-        reviewTextArea.clear();
-        scoreLabel.setText("");
-        reviewCountLabel.setText("");
-        bookCoverImageView.setImage(null);
         tfSearch.clear();
-        cbMembers.getItems().clear();
-        cbDocuments.getItems().clear();
         cbMembers.getEditor().clear();
         cbDocuments.getEditor().clear();
-        myAccountController.handleReload();
-        memberManagementController.reload();
-        addController.reload();
-        deleteController.reload();
-        editController.handleReload();
-        try {
-            Account account = AccountDao.getInstance().get(accountID);
-            if (account != null) {
-                if (account.getAccountType().equals("User")) {
-                    User currentUser = UserDao.getInstance().get(accountID);
-                    if (currentUser != null) {
-                        userName.setText("User: " + currentUser.getFullName());
-                    }
-                } else {
-                    Manager currentUser = ManagerDao.getInstance().get(accountID);
-                    if (currentUser != null) {
-                        userName.setText("Manager: " + currentUser.getFullName());
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Database Error", e.getMessage(), null);
-        } catch (Exception e) {
-            util.ErrorDialog.showError("Error", e.getMessage(), null);
-        }
-        if (userList != null) {
-            cbMembers.getItems().addAll(userList.stream()
-                    .map(user -> user.getAccountID() + " - " + user.getFullName())
-                    .collect(Collectors.toList()));
-        }
-
-        if (bookList != null) {
-            cbDocuments.getItems().addAll(bookList.stream()
-                    .map(document -> document.getBookID() + " - " + document.getTitle())
-                    .collect(Collectors.toList()));
-        }
         dpBorrowDate.setValue(LocalDate.now());
-
         dpReturnDate.getEditor().clear();
-    }
 
-    public void reload() {
-        handleReload();
-    }
+        if (myAccountController != null) myAccountController.handleReload();
+        if (memberManagementController != null) memberManagementController.reload();
+        if (addController != null) addController.reload();
+        if (deleteController != null) deleteController.reload();
+        if (editController != null) editController.handleReload();
 
-    @FXML
-    private void handleChangeCover() {
-        // Mở cửa sổ chọn tệp
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Chọn ảnh bìa sách");
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif"));
-
-        // Lấy cửa sổ hiện tại
-        Stage stage = (Stage) tvBorrowedDocuments.getScene().getWindow();
-
-        // Hiển thị cửa sổ chọn tệp và lấy tệp được chọn
-        File selectedFile = fileChooser.showOpenDialog(stage);
-        if (selectedFile != null) {
-            try {
-                // Gọi phương thức setBookImage để cập nhật ảnh bìa cho sách
-                BookDao bookDao = BookDao.getInstance();
-                int bookId = tvDocuments.getSelectionModel().getSelectedItem().getBookID();
-                bookDao.setBookImage(bookId, selectedFile.getAbsolutePath());
-                util.ErrorDialog.showSuccess("Thành công", "Ảnh bìa đã được thay đổi thành công.",
-                        (Stage) tvDocuments.getScene().getWindow());
-                handleReload();
-            } catch (SQLException e) {
-                util.ErrorDialog.showError("Database Error", e.getMessage(),
-                        (Stage) tvDocuments.getScene().getWindow());
-            } catch (Exception e) {
-                util.ErrorDialog.showError("Error", e.getMessage(), (Stage) tvDocuments.getScene().getWindow());
-            }
-        } else {
-            ErrorDialog.showError("Filee Error", "Error load file", "select another file", null);
-        }
-
+        menuService.getAccountDisplayName(accountID).thenAccept(name -> Platform.runLater(() -> userName.setText(name)));
     }
 
     @FXML
     private void handleChangeDescription() {
         Document selectedDocument = tvDocuments.getSelectionModel().getSelectedItem();
         if (selectedDocument == null) {
-            util.ErrorDialog.showError("Lỗi", "Vui lòng chọn một tài liệu từ danh sách.",
-                    (Stage) tvDocuments.getScene().getWindow());
+            ErrorDialog.showError("Lỗi", "Vui lòng chọn một tài liệu từ danh sách.", (Stage) tvDocuments.getScene().getWindow());
             return;
         }
-
         String newDescription = taDocumentDetails.getText().trim();
-        if (newDescription.isEmpty()) {
-            util.ErrorDialog.showError("Lỗi", "Mô tả không được để trống.",
-                    (Stage) taDocumentDetails.getScene().getWindow());
-            return;
-        }
-
-        try {
-            BookDao.getInstance().setDescription(selectedDocument.getBookID(), newDescription);
-            util.ErrorDialog.showSuccess("Thành công", "Mô tả đã được thay đổi thành công.",
-                    (Stage) taDocumentDetails.getScene().getWindow());
-            handleReload();
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Database Error", e.getMessage(),
-                    (Stage) taDocumentDetails.getScene().getWindow());
-        } catch (Exception e) {
-            util.ErrorDialog.showError("Error", e.getMessage(), (Stage) taDocumentDetails.getScene().getWindow());
-        }
+        menuService.updateDocumentDescription(selectedDocument.getBookID(), newDescription)
+                .whenComplete((v, ex) -> Platform.runLater(() -> {
+                    if (ex != null) {
+                        ErrorDialog.showError("Database Error", ex.getMessage(), (Stage) taDocumentDetails.getScene().getWindow());
+                    } else {
+                        ErrorDialog.showSuccess("Thành công", "Mô tả đã được thay đổi thành công.", (Stage) taDocumentDetails.getScene().getWindow());
+                        handleReload();
+                    }
+                }));
     }
 
     @FXML
     private void handleFetchIncorrectInfo() {
+        Document selected = tvDocuments.getSelectionModel().getSelectedItem();
+        if (selected == null) return;
+
         ThreadManager.execute(() -> {
             try {
-                String bookName = tvDocuments.getSelectionModel().getSelectedItem().getTitle();
-                BookInfo bookinfo = googleAPI.GoogleApiBookController.getBookInfo(bookName);
-                String score = bookinfo.getRating();
-                String review = bookinfo.getDescription();
-                String reviewCount = bookinfo.getReviewCount();
-                String imageString = bookinfo.getImageUrl();
-
+                BookInfo bookinfo = GoogleApiBookController.getBookInfo(selected.getTitle());
                 Platform.runLater(() -> {
-                    reviewTextArea.setText(review);
-                    scoreLabel.setText(String.valueOf(score));
-                    if (review != null) {
-                        reviewTextArea.setText(review);
-                    } else {
-                        reviewTextArea.setText("No review available.");
+                    reviewTextArea.setText(bookinfo.getDescription() != null ? bookinfo.getDescription() : "No review available.");
+                    scoreLabel.setText(bookinfo.getRating() != null ? bookinfo.getRating() : "No rating available.");
+                    reviewCountLabel.setText(bookinfo.getReviewCount() != null ? bookinfo.getReviewCount() : "No review count available.");
+                    if (bookinfo.getImageUrl() != null) {
+                        bookCoverImageView.setImage(new Image(bookinfo.getImageUrl()));
                     }
-
-                    if (score != null) {
-                        scoreLabel.setText(score);
-                    } else {
-                        scoreLabel.setText("No rating available.");
-                    }
-
-                    if (reviewCount != null) {
-                        reviewCountLabel.setText(reviewCount);
-                    } else {
-                        reviewCountLabel.setText("No review count available.");
-                    }
-                    Image image = new Image(imageString);
-                    bookCoverImageView.setImage(image);
                 });
             } catch (Exception e) {
-                e.printStackTrace();
-                Platform.runLater(() -> {
-                    util.ErrorDialog.showError("Error", "Failed to fetch book information: " + e.getMessage(), null);
-                });
+                Platform.runLater(() -> ErrorDialog.showError("Error", "Failed to fetch book information: " + e.getMessage(), null));
             }
         });
-
     }
 
     @FXML
     public void handleFilterAction() {
         String filterText = tfFilter.getText().toLowerCase().trim();
-        ObservableList<Document> allDocuments = FXCollections.observableArrayList(bookList);
-        ObservableList<Document> filteredDocuments = FXCollections.observableArrayList();
-
-        for (Document doc : allDocuments) {
-            if (doc.getTitle().toLowerCase().contains(filterText)) {
-                filteredDocuments.add(doc);
-            }
-        }
-
+        ObservableList<Document> filteredDocuments = bookList.stream()
+                .filter(doc -> doc.getTitle().toLowerCase().contains(filterText))
+                .collect(Collectors.toCollection(FXCollections::observableArrayList));
         tvDocuments.setItems(filteredDocuments);
 
         if (filteredDocuments.isEmpty()) {
-            util.ErrorDialog.showError("Không tìm thấy", "Không có tài liệu nào phù hợp với từ khóa tìm kiếm.",
-                    (Stage) tvDocuments.getScene().getWindow());
-            tvDocuments.setItems(allDocuments); // Đưa bảng về trạng thái ban đầu
+            ErrorDialog.showError("Không tìm thấy", "Không có tài liệu nào phù hợp.", (Stage) tvDocuments.getScene().getWindow());
+            tvDocuments.setItems(FXCollections.observableArrayList(bookList));
         }
     }
 
     @FXML
     private void handleBorrowDocument() {
-        cbDocuments.getParent().requestFocus();
-        String nameDocument = cbDocuments.getValue();
-        nameDocument = nameDocument.split(" - ")[0];
-        String selectedMemberIdString = cbMembers.getValue();
-        if (selectedMemberIdString != null && selectedMemberIdString.contains(" - ")) {
-            selectedMemberIdString = selectedMemberIdString.split(" - ")[0];
-        }
-
-        if (nameDocument == null || nameDocument.isEmpty()) {
-            util.ErrorDialog.showError("Lỗi", "Vui lòng chọn một tài liệu từ danh sách.",
-                    (Stage) cbDocuments.getScene().getWindow());
-            return;
-        }
-
-        if (selectedMemberIdString == null || selectedMemberIdString.isEmpty()) {
-            util.ErrorDialog.showError("Lỗi", "Vui lòng chọn một thành viên từ danh sách.",
-                    (Stage) cbMembers.getScene().getWindow());
-            return;
-        }
-
+        String docValue = cbDocuments.getValue();
+        String memberValue = cbMembers.getValue();
         LocalDate borrowDate = dpBorrowDate.getValue();
         LocalDate returnDate = dpReturnDate.getValue();
 
-        if (borrowDate == null || returnDate == null) {
-            util.ErrorDialog.showError("Lỗi", "Vui lòng chọn ngày mượn và ngày trả.",
-                    (Stage) dpBorrowDate.getScene().getWindow());
+        if (docValue == null || memberValue == null || borrowDate == null || returnDate == null) {
+            ErrorDialog.showError("Lỗi", "Vui lòng điền đầy đủ thông tin mượn sách.", (Stage) cbDocuments.getScene().getWindow());
             return;
         }
 
-        if (borrowDate.isAfter(returnDate)) {
-            util.ErrorDialog.showError("Lỗi", "Ngày mượn không thể sau ngày trả.",
-                    (Stage) dpBorrowDate.getScene().getWindow());
-            return;
-        }
-
-        Integer selectedMemberId;
         try {
-            selectedMemberId = Integer.parseInt(selectedMemberIdString);
+            int docId = Integer.parseInt(docValue.split(" - ")[0]);
+            int memberId = Integer.parseInt(memberValue.split(" - ")[0]);
+
+            menuService.borrowDocument(docId, memberId, borrowDate, returnDate)
+                    .whenComplete((v, ex) -> Platform.runLater(() -> {
+                        if (ex != null) {
+                            ErrorDialog.showError("Error", ex.getMessage(), (Stage) cbDocuments.getScene().getWindow());
+                        } else {
+                            ErrorDialog.showSuccess("Thành công", "Tài liệu đã được mượn thành công.", (Stage) cbDocuments.getScene().getWindow());
+                            handleReload();
+                        }
+                    }));
         } catch (NumberFormatException e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Lỗi", "ID thành viên không hợp lệ.", (Stage) cbMembers.getScene().getWindow());
-            return;
+            ErrorDialog.showError("Lỗi", "ID tài liệu hoặc thành viên không hợp lệ.", (Stage) cbDocuments.getScene().getWindow());
         }
-
-        try {
-            int selectedDocumentId = Integer.parseInt(nameDocument);
-            Borrow newBorrow = new Borrow(
-                    selectedMemberId,
-                    selectedDocumentId,
-                    borrowDate,
-                    returnDate,
-                    "Borrowed");
-
-            BorrowDao.getInstance().insert(newBorrow);
-            util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được mượn thành công.",
-                    (Stage) cbDocuments.getScene().getWindow());
-
-            handleReload();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Database Error", e.getMessage(), (Stage) cbDocuments.getScene().getWindow());
-        } catch (Exception e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Error", e.getMessage(), (Stage) cbDocuments.getScene().getWindow());
-        }
-
     }
 
     @FXML
     private void handleReturnDocument() {
-        try {
-            Borrow selectedBorrow = BorrowDao.getInstance()
-                    .get(tvBorrowedDocuments.getSelectionModel().getSelectedItem().getBorrowID());
-
-            if (selectedBorrow == null) {
-                util.ErrorDialog.showError("Lỗi", "Vui lòng chọn một tài liệu đã mượn từ bảng để trả.",
-                        (Stage) tvBorrowedDocuments.getScene().getWindow());
-                return;
-            }
-
-            // Check if the document has already been returned
-            Return existingReturnRecord = ReturnDao.getInstance().get(selectedBorrow.getBorrowID());
-            if (existingReturnRecord != null) {
-                util.ErrorDialog.showError("Lỗi", "Tài liệu này đã được trả trước đó.",
-                        (Stage) tvBorrowedDocuments.getScene().getWindow());
-                return;
-            }
-
-            Document selectedDocument = BookDao.getInstance().get(selectedBorrow.getBookID());
-            if (selectedDocument == null) {
-                util.ErrorDialog.showError("Lỗi", "Không tìm thấy tài liệu.",
-                        (Stage) tvBorrowedDocuments.getScene().getWindow());
-                return;
-            }
-
-            int damagePercentage = (int) (Math.random() * 100); // Random damage percentage between 0 and 100
-            Return returnRecord = new Return(BorrowDao.getInstance().getID(selectedBorrow),
-                    LocalDate.now(), damagePercentage);
-            ReturnDao.getInstance().insert(returnRecord);
-            util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được trả thành công.",
-                    (Stage) tvBorrowedDocuments.getScene().getWindow());
-            handleReload();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Database Error", e.getMessage(),
-                    (Stage) tvBorrowedDocuments.getScene().getWindow());
-        } catch (Exception e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Error", e.getMessage(), (Stage) tvBorrowedDocuments.getScene().getWindow());
+        BorrowReturn selected = tvBorrowedDocuments.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            ErrorDialog.showError("Lỗi", "Vui lòng chọn một tài liệu đã mượn từ bảng để trả.", (Stage) tvBorrowedDocuments.getScene().getWindow());
+            return;
         }
 
+        menuService.returnDocument(selected.getBorrowID())
+                .whenComplete((v, ex) -> Platform.runLater(() -> {
+                    if (ex != null) {
+                        ErrorDialog.showError("Error", ex.getMessage(), (Stage) tvBorrowedDocuments.getScene().getWindow());
+                    } else {
+                        ErrorDialog.showSuccess("Thành công", "Tài liệu đã được trả thành công.", (Stage) tvBorrowedDocuments.getScene().getWindow());
+                        handleReload();
+                    }
+                }));
     }
 
     @FXML
@@ -771,38 +471,24 @@ public class menuController {
         String searchCriteria = cbSearchCriteria.getValue();
 
         if (searchCriteria == null || searchText.isEmpty()) {
-            util.ErrorDialog.showError("Lỗi", "Vui lòng nhập nội dung tìm kiếm và chọn tiêu chí tìm kiếm.",
-                    (Stage) tfSearch.getScene().getWindow());
+            ErrorDialog.showError("Lỗi", "Vui lòng nhập và chọn tiêu chí tìm kiếm.", (Stage) tfSearch.getScene().getWindow());
             return;
         }
 
-        ObservableList<BorrowReturn> allBorrows = FXCollections.observableArrayList(borrowReturnList);
-        ObservableList<BorrowReturn> filteredBorrows;
+        ObservableList<BorrowReturn> filteredBorrows = borrowReturnList.stream()
+                .filter(borrow -> {
+                    if (searchCriteria.equals("Thành viên")) {
+                        return borrow.getMember().toLowerCase().contains(searchText);
+                    } else { // "Tài liệu"
+                        return borrow.getBook().toLowerCase().contains(searchText);
+                    }
+                })
+                .collect(Collectors.toCollection(FXCollections::observableArrayList));
 
-        if (searchCriteria.equals("Thành viên")) {
-            filteredBorrows = allBorrows.stream()
-                    .filter(borrow -> borrow.getMember().toLowerCase().contains(searchText))
-                    .collect(Collectors.toCollection(FXCollections::observableArrayList));
-
-            tvBorrowedDocuments.setItems(filteredBorrows);
-
-            if (filteredBorrows.isEmpty()) {
-                util.ErrorDialog.showError("Không tìm thấy", "Không có thành viên nào phù hợp với từ khóa tìm kiếm.",
-                        (Stage) tvBorrowedDocuments.getScene().getWindow());
-                tvBorrowedDocuments.setItems(allBorrows); // Đưa bảng về trạng thái ban đầu
-            }
-        } else if (searchCriteria.equals("Tài liệu")) {
-            filteredBorrows = allBorrows.stream()
-                    .filter(borrow -> borrow.getBook().toLowerCase().contains(searchText))
-                    .collect(Collectors.toCollection(FXCollections::observableArrayList));
-
-            tvBorrowedDocuments.setItems(filteredBorrows);
-
-            if (filteredBorrows.isEmpty()) {
-                util.ErrorDialog.showError("Không tìm thấy", "Không có tài liệu nào phù hợp với từ khóa tìm kiếm.",
-                        (Stage) tvBorrowedDocuments.getScene().getWindow());
-                tvBorrowedDocuments.setItems(allBorrows); // Đưa bảng về trạng thái ban đầu
-            }
+        tvBorrowedDocuments.setItems(filteredBorrows);
+        if (filteredBorrows.isEmpty()) {
+            ErrorDialog.showError("Không tìm thấy", "Không có kết quả nào phù hợp.", (Stage) tvBorrowedDocuments.getScene().getWindow());
+            tvBorrowedDocuments.setItems(FXCollections.observableArrayList(borrowReturnList));
         }
     }
 
@@ -811,124 +497,47 @@ public class menuController {
         try {
             Stage stage = (Stage) tvDocuments.getScene().getWindow();
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/login.fxml"));
-            if (loader.getLocation() == null) {
-                System.err.println("Error: FXML file not found!");
-                return;
-            }
             Scene scene = new Scene(loader.load());
             stage.setTitle("Đăng nhập");
             stage.setScene(scene);
             stage.setWidth(1000);
             stage.setHeight(600);
             stage.setResizable(false);
-            stage.getScene().getRoot().setStyle("-fx-border-color: black; -fx-border-width: 2px;");
             stage.centerOnScreen();
-
-            // Sử dụng đường dẫn tuyệt đối cho tệp hình ảnh
-            Image icon = new Image(getClass().getResourceAsStream("/images/login/logo.png"));
-            if (icon.isError()) {
-                System.err.println("Error: Image file not found!");
-                return;
-            }
-            stage.getIcons().add(icon);
-
             stage.show();
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
-    private boolean ishandlingQR = false;
+    private boolean isHandlingQR = false;
     public QRScanner qrScanner = QRScanner.getInstance();
-
-    private boolean isValidQRCodeFormatUser(String qrCodeText) {
-        if (qrCodeText == null || !qrCodeText.startsWith("accountID:")) {
-            return false;
-        }
-        try {
-            Integer.parseInt(qrCodeText.substring("accountID:".length()).trim());
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
-    private boolean isValidQRCodeFormatBook(String qrCodeText) {
-        if (qrCodeText == null || !qrCodeText.startsWith("BookID:")) {
-            return false;
-        }
-        try {
-            Integer.parseInt(qrCodeText.substring("bookID:".length()).trim());
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
 
     @FXML
     private void handleQRCodeScan() {
-        boolean isscanning = (qrScanner != null && qrScanner.isRunning());
-        if (isscanning || ishandlingQR) {
-            return;
-        }
+        if (qrScanner.isRunning() || isHandlingQR) return;
+        isHandlingQR = true;
+
         qrScanner.startQRScanner(qrCodeText -> {
-            Platform.runLater(() -> {
-
-                try {
-                    if (ishandlingQR) {
-                        return;
-                    }
-                    if (isValidQRCodeFormatUser(qrCodeText)) {
-                        int accountID = Integer.parseInt(qrCodeText.substring("accountID:".length()).trim());
-                        User user = UserDao.getInstance().get(accountID);
-                        ishandlingQR = true;
-                        if (!borrowAndReturnTab.isVisible()) {
-                            showBorrowReturnTab();
-                        }
-                        cbMembers.setValue(accountID + " - " + user.getFullName());
-                        qrScanner.stopQRScanner();
-                        ishandlingQR = false;
-                    } else if (isValidQRCodeFormatBook(qrCodeText)) {
-                        int bookID = Integer.parseInt(qrCodeText.substring("bookID:".length()).trim());
-                        Document document = BookDao.getInstance().get(bookID);
-                        ishandlingQR = true;
-
-                        if (borrowAndReturnTab.isVisible()) {
-                            cbDocuments.setValue(bookID + " - " + document.getTitle());
-
-                        } else {
-                            showDocumentListTab();
-                            tvDocuments.getSelectionModel().select(document);
-                        }
-
-                        qrScanner.stopQRScanner();
-                        ishandlingQR = false;
+            menuService.processQRCode(qrCodeText).whenComplete((result, ex) -> Platform.runLater(() -> {
+                if (ex != null) {
+                    ErrorDialog.showError("QR Code Error", ex.getMessage(), null);
+                } else if (result instanceof MenuService.UserQRResult res) {
+                    if (!borrowAndReturnTab.isVisible()) showBorrowReturnTab();
+                    cbMembers.setValue(res.user().getAccountID() + " - " + res.user().getFullName());
+                } else if (result instanceof MenuService.BookQRResult res) {
+                    if (borrowAndReturnTab.isVisible()) {
+                        cbDocuments.setValue(res.document().getBookID() + " - " + res.document().getTitle());
                     } else {
-                        ErrorDialog.showError("QR Code Error", "Invalid QR Code format", null);
-                        ishandlingQR = false;
-                        return;
+                        showDocumentListTab();
+                        tvDocuments.getSelectionModel().select(res.document());
                     }
-
-                } catch (NumberFormatException e) {
-                    ErrorDialog.showError("QR Code Error", "Invalid ID format", null);
-                    e.printStackTrace();
-                    ishandlingQR = false;
-                } catch (RuntimeException e) {
-                    ErrorDialog.showError("QR Code Error", e.getMessage(), null);
-                    e.printStackTrace();
-                    ishandlingQR = false;
-                } catch (SQLException e) {
-                    ErrorDialog.showError("Database Error", e.getMessage(), null);
-                    e.printStackTrace();
-                    ishandlingQR = false;
-                } catch (Exception e) {
-                    ErrorDialog.showError("QR Code Error", e.getMessage(), null);
-                    e.printStackTrace();
-                    ishandlingQR = false;
+                } else if (result instanceof MenuService.InvalidQRResult res) {
+                    ErrorDialog.showError("QR Code Error", res.error(), null);
                 }
-
-            });
+                qrScanner.stopQRScanner();
+                isHandlingQR = false;
+            }));
         });
     }
 }

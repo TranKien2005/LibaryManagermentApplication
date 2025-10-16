@@ -1,6 +1,11 @@
 package Controller;
 
-import DAO.BookDao;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
+
+import Main.Main;
+import service.HomeService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -15,10 +20,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import model.Document;
 import util.ErrorDialog;
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.SQLException;
-import java.util.List;
 
 public class HomeController {
 
@@ -49,7 +50,7 @@ public class HomeController {
     @FXML
     private VBox trendingBooksSection;
 
-    private BookDao bookDao = BookDao.getInstance();
+    private final HomeService homeService;
     private int newArrivalsPage = 0;
     private int searchPage = 0;
     private static final int PAGE_SIZE = 14;
@@ -64,6 +65,10 @@ public class HomeController {
 
     private Parent initialContent;
 
+    public HomeController() {
+        this.homeService = Main.appContainer.getHomeService();
+    }
+
     public static HomeController getInstance() {
         if (instance == null) {
             instance = new HomeController();
@@ -73,39 +78,44 @@ public class HomeController {
 
     @FXML
     public void initialize() {
-        try {
-            // Load dữ liệu từ cơ sở dữ liệu
-            initialContent = (Parent) scrollPaneMain.getContent();
-            topBooks = bookDao.getTopRatedBooks();
-            favoriteBooks = bookDao.getFavorite(2);
-            trendingBooks = bookDao.getTrendingBooks();
+        initialContent = (Parent) scrollPaneMain.getContent();
+        tfSearch.setOnAction(x -> handleSearch());
+        loadInitialContent();
+    }
 
-            // Hiển thị top sách
+    private void loadInitialContent() {
+        try {
+            int favAccountId = 2; // fallback account id when not logged in
+            model.Account current = service.AppCache.getInstance().getCurrentAccount();
+            if (current != null) {
+                favAccountId = current.getAccountID();
+            }
+            HomeService.InitialHomeContent initialData = homeService.getInitialContent(favAccountId);
+            topBooks = initialData.topBooks;
+            favoriteBooks = initialData.favoriteBooks;
+            trendingBooks = initialData.trendingBooks;
+
+            fpTopBooks.getChildren().clear();
             for (Document book : topBooks) {
-                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImage(), book.getRating(), book);
+                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
                 fpTopBooks.getChildren().add(bookItem);
             }
 
-            // Hiển thị sách yêu thích cho người dùng có AccountID = 2
+            fpRecommendedBooks.getChildren().clear();
             for (Document book : favoriteBooks) {
-                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImage(), book.getRating(), book);
+                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
                 fpRecommendedBooks.getChildren().add(bookItem);
             }
 
-            // Hiển thị sách trending
+            fpTrendingBooks.getChildren().clear();
             for (Document book : trendingBooks) {
-                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImage(), book.getRating(), book);
+                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
                 fpTrendingBooks.getChildren().add(bookItem);
             }
 
             loadMoreNewArrivals();
-
-            // Add listener for Enter key press in the search field
-            tfSearch.setOnAction(_ -> handleSearch());
-
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle the exception appropriately (e.g., show an error message to the user)
         }
     }
 
@@ -188,43 +198,44 @@ public class HomeController {
     }
 
     private void loadMoreSearchResults() throws SQLException {
-        List<Document> searchResults = bookDao.searchNewArrivals(currentSearchText, searchPage, PAGE_SIZE_SEARCH);
+    List<Document> searchResults = homeService.search(currentSearchText, searchPage, PAGE_SIZE_SEARCH);
 
         if (searchResults.isEmpty()) {
             throw new SQLException("No more search results to load.");
         }
         fpNewArrivals.getChildren().clear();
-        for (Document book : searchResults) {
+            for (Document book : searchResults) {
 
-            VBox bookItem = createBookItem(book.getTitle(), book.getCoverImage(), book.getRating(), book);
+            VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
             fpNewArrivals.getChildren().add(bookItem);
         }
     }
 
     private void loadMoreNewArrivals() throws SQLException {
-        List<Document> newArrivals = bookDao.getAll(newArrivalsPage, PAGE_SIZE);
+    List<Document> newArrivals = homeService.getNewArrivals(newArrivalsPage, PAGE_SIZE);
         if (newArrivals.isEmpty()) {
             throw new SQLException("No more new arrivals to load.");
         }
         fpNewArrivals.getChildren().clear();
         for (Document book : newArrivals) {
-            VBox bookItem = createBookItem(book.getTitle(), book.getCoverImage(), book.getRating(), book);
+            VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
             fpNewArrivals.getChildren().add(bookItem);
         }
     }
-
-    private VBox createBookItem(String title, InputStream coverImageStream, double rating, Document book) {
+    private VBox createBookItem(String title, String coverImageUrl, double rating, Document book) {
         VBox vBox = new VBox(10);
         vBox.getStyleClass().add("book-item");
         ImageView imageView = new ImageView();
-        if (coverImageStream != null) {
-            Image image = new Image(coverImageStream);
-            imageView.setImage(image);
+        if (coverImageUrl != null && !coverImageUrl.isBlank()) {
             try {
-                coverImageStream.reset();
-            } catch (IOException e) {
-                e.printStackTrace();
-                ErrorDialog.showError("Lỗi", "Không thể tải ảnh bìa sách.", (Stage) tfSearch.getScene().getWindow());
+                Image image = new Image(coverImageUrl, 100, 150, true, true, true);
+                image.errorProperty().addListener((_obs, _old, isErr) -> {
+                    if (_obs == null && _old == null) { /* no-op to avoid unused vars */ }
+                    if (isErr) imageView.setImage(new Image("/images/menu/coverArtUnknown.png"));
+                });
+                imageView.setImage(image);
+            } catch (Exception e) {
+                imageView.setImage(new Image("/images/menu/coverArtUnknown.png"));
             }
         } else {
             Image image = new Image("/images/menu/coverArtUnknown.png");
@@ -325,38 +336,13 @@ public class HomeController {
 
     @FXML
     public void handleReload() {
-
+        // Clear only book-related cache and reuse the initial load routine
+        service.AppCache.getInstance().clearBookCache();
         scrollPaneMain.setContent(initialContent);
         isSearching = false;
         tfSearch.clear();
 
-        try {
-            topBooks = bookDao.getTopRatedBooks();
-            favoriteBooks = bookDao.getFavorite(2);
-            trendingBooks = bookDao.getTrendingBooks();
-
-            fpTopBooks.getChildren().clear();
-            for (Document book : topBooks) {
-                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImage(), book.getRating(), book);
-                fpTopBooks.getChildren().add(bookItem);
-            }
-
-            fpRecommendedBooks.getChildren().clear();
-            for (Document book : favoriteBooks) {
-                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImage(), book.getRating(), book);
-                fpRecommendedBooks.getChildren().add(bookItem);
-            }
-
-            fpTrendingBooks.getChildren().clear();
-            for (Document book : trendingBooks) {
-                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImage(), book.getRating(), book);
-                fpTrendingBooks.getChildren().add(bookItem);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle the exception appropriately (e.g., show an error message to the user)
-        }
-        // Hiển thị lại các VBox top, recommend, và trending
+        // Ensure sections are visible
         topBooksSection.setVisible(true);
         topBooksSection.setManaged(true);
         recommendedBooksSection.setVisible(true);
@@ -364,18 +350,12 @@ public class HomeController {
         trendingBooksSection.setVisible(true);
         trendingBooksSection.setManaged(true);
 
-        // Xóa các sách hiện tại trong phần sách mới
+        // Reset paging and reload content via helper
         fpNewArrivals.getChildren().clear();
-        newArrivalsPage = 0; // Reset the page number for new arrivals
+        newArrivalsPage = 0;
         updateCurrentPageLabel();
-        try {
-            // Tải lại sách mới
-            loadMoreNewArrivals();
-            scrollPaneMain.setVvalue(0);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle the exception appropriately (e.g., show an error message to the user)
-        }
+        loadInitialContent();
+        scrollPaneMain.setVvalue(0);
     }
 
     public void reload() {

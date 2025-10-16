@@ -9,7 +9,7 @@ import java.util.concurrent.Future;
 import model.Manager;
 import util.ThreadManager;
 
-public class ManagerDao {
+public class ManagerDao implements BaseDao<model.Manager, Integer> {
     private static ManagerDao instance;
 
     private ManagerDao() {
@@ -66,7 +66,7 @@ public class ManagerDao {
         }
     }
 
-    public void update(Manager manager, int id) throws SQLException {
+    public void update(Manager manager, Integer id) throws SQLException {
         String query = "UPDATE Manager SET FullName = ?, Email = ?, Phone = ? WHERE AccountID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -80,7 +80,7 @@ public class ManagerDao {
         }
     }
 
-    public void delete(int id) throws SQLException {
+    public void delete(Integer id) throws SQLException {
         String query = "DELETE FROM Manager WHERE AccountID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -91,7 +91,7 @@ public class ManagerDao {
         }
     }
 
-    public Manager get(int id) throws SQLException {
+    public Manager get(Integer id) throws SQLException {
         String query = "SELECT * FROM Manager WHERE AccountID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -111,7 +111,7 @@ public class ManagerDao {
         return null;
     }
 
-    public int getID(Manager manager) throws SQLException {
+    public Integer getID(Manager manager) throws SQLException {
         String query = "SELECT AccountID FROM Manager WHERE FullName = ? AND Email = ? AND Phone = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {

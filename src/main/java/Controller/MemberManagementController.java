@@ -3,8 +3,8 @@ package Controller;
 import java.sql.SQLException;
 import java.util.List;
 
-import DAO.UserDao;
-import DAO.AccountDao;
+import Main.Main;
+import service.MemberManagementService;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
@@ -53,6 +53,11 @@ public class MemberManagementController {
     private TextField tfPhone;
 
     private final ObservableList<User> userList = FXCollections.observableArrayList();
+    private final MemberManagementService memberManagementService;
+
+    public MemberManagementController() {
+        this.memberManagementService = Main.appContainer.getMemberManagementService();
+    }
 
     @FXML
     public void initialize() {
@@ -62,11 +67,11 @@ public class MemberManagementController {
             loadUsers();
         });
 
-        tvMembers.getSelectionModel().selectedItemProperty().addListener((_, _, newValue) -> {
+        tvMembers.getSelectionModel().selectedItemProperty().addListener((x, y, newValue) -> {
             if (newValue != null) {
                 try {
                     tfUsername.setText(newValue.getFullName());
-                    Account account = AccountDao.getInstance().get(newValue.getAccountID());
+                    Account account = memberManagementService.getAccount(newValue.getAccountID());
                     pfPassword.setText(account.getPassword());
                     tfUsername.setText(account.getUsername());
                     tfFullname.setText(newValue.getFullName());
@@ -92,7 +97,7 @@ public class MemberManagementController {
 
     private void loadUsers() {
         try {
-            List<User> users = UserDao.getInstance().getAll();
+            List<User> users = memberManagementService.getUsers();
             Platform.runLater(() -> {
                 userList.clear();
                 userList.addAll(users);
@@ -144,11 +149,9 @@ public class MemberManagementController {
         selectedUser.setFullName(tfFullname.getText());
         selectedUser.setPhone(tfPhone.getText());
         selectedUser.setEmail(tfEmail.getText());
-        int userId = tvMembers.getSelectionModel().getSelectedItem().getAccountID();
 
         try {
-            UserDao.getInstance().update(selectedUser, userId);
-            AccountDao.getInstance().updatePassword(userId, pfPassword.getText());
+            memberManagementService.updateUser(selectedUser, pfPassword.getText());
             util.ErrorDialog.showSuccess("Update Successful", "User details have been successfully updated.",
                     (Stage) rootVBox.getScene().getWindow());
         } catch (SQLException e) {
@@ -180,7 +183,7 @@ public class MemberManagementController {
 
     private void refreshTableView() {
         try {
-            userList.setAll(UserDao.getInstance().getAll());
+            userList.setAll(memberManagementService.getUsers());
         } catch (SQLException e) {
             util.ErrorDialog.showError("Database Error", e.getMessage(), (Stage) rootVBox.getScene().getWindow());
         } catch (Exception e) {
@@ -214,7 +217,7 @@ public class MemberManagementController {
                 // Perform deletion
                 ThreadManager.execute(() -> {
                     try {
-                        UserDao.getInstance().delete(selectedUser.getAccountID());
+                        memberManagementService.deleteUser(selectedUser);
                         Platform.runLater(() -> {
                             userList.remove(selectedUser);
                             refreshTableView();

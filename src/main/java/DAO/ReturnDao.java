@@ -9,7 +9,7 @@ import java.util.concurrent.Future;
 import model.Return;
 import util.ThreadManager;
 
-public class ReturnDao {
+public class ReturnDao implements BaseDao<model.Return, Integer> {
     private static ReturnDao instance;
 
     private ReturnDao() {
@@ -65,7 +65,7 @@ public class ReturnDao {
         }
     }
 
-    public void update(Return returnRecord, int id) throws SQLException {
+    public void update(Return returnRecord, Integer id) throws SQLException {
         String query = "UPDATE ReturnTable SET ReturnDate = ?, DamagePercentage = ? WHERE BorrowID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -78,7 +78,7 @@ public class ReturnDao {
         }
     }
 
-    public void delete(int id) throws SQLException {
+    public void delete(Integer id) throws SQLException {
         String query = "DELETE FROM ReturnTable WHERE BorrowID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -89,7 +89,7 @@ public class ReturnDao {
         }
     }
 
-    public Return get(int id) throws SQLException {
+    public Return get(Integer id) throws SQLException {
         String query = "SELECT * FROM ReturnTable WHERE BorrowID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -109,7 +109,7 @@ public class ReturnDao {
         return null;
     }
 
-    public int getID(Return returnRecord) throws SQLException {
+    public Integer getID(Return returnRecord) throws SQLException {
         String query = "SELECT BorrowID FROM ReturnTable WHERE ReturnDate = ? AND DamagePercentage = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {

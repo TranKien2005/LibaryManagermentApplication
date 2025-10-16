@@ -1,13 +1,6 @@
 package DAO;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+// imports related to image streaming removed; BookDao now stores image URLs in DB
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +10,7 @@ import java.util.concurrent.Future;
 import model.Document;
 import util.ThreadManager;
 
-public final class BookDao {
+public final class BookDao implements BaseDao<Document, Integer> {
     private static BookDao instance;
 
     private BookDao() {
@@ -48,7 +41,7 @@ public final class BookDao {
                             rs.getInt("YearPublished"),
                             rs.getInt("AvailableCopies"));
                     document.setDescription(rs.getString("Description"));
-                    document.setCoverImage(rs.getBinaryStream("Image"));
+                    document.setCoverImageUrl(rs.getString("Image"));
                     document.setRating(rs.getInt("Rating"));
                     document.setReviewCount(rs.getInt("NumberOfRatings"));
                     synchronized (documents) {
@@ -77,7 +70,7 @@ public final class BookDao {
             pstmt.setString(4, document.getPublisher());
             pstmt.setInt(5, document.getYearPublished());
             pstmt.setInt(6, document.getAvailableCopies());
-            pstmt.setBinaryStream(7, document.getCoverImage());
+            pstmt.setString(7, document.getCoverImageUrl());
             pstmt.setString(8, document.getDescription());
             pstmt.setDouble(9, document.getRating());
             pstmt.setInt(10, document.getReviewCount());
@@ -87,7 +80,7 @@ public final class BookDao {
         }
     }
 
-    public int getID(Document document) throws SQLException {
+    public Integer getID(Document document) throws SQLException {
         String query = "SELECT ID FROM Book WHERE Title = ? AND Author = ? AND Category = ? AND Publisher = ? AND YearPublished = ? AND AvailableCopies = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -108,7 +101,7 @@ public final class BookDao {
         return -1;
     }
 
-    public void update(Document document, int id) throws SQLException {
+    public void update(Document document, Integer id) throws SQLException {
         String query = "UPDATE Book SET Title = ?, Author = ?, Category = ?, Publisher = ?, YearPublished = ?, AvailableCopies = ? WHERE ID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -125,7 +118,7 @@ public final class BookDao {
         }
     }
 
-    public void delete(int id) throws SQLException {
+    public void delete(Integer id) throws SQLException {
         String query = "DELETE FROM Book WHERE ID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -136,7 +129,7 @@ public final class BookDao {
         }
     }
 
-    public Document get(int id) throws SQLException {
+    public Document get(Integer id) throws SQLException {
         String query = "SELECT * FROM Book WHERE ID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -152,7 +145,7 @@ public final class BookDao {
                             rs.getInt("YearPublished"),
                             rs.getInt("AvailableCopies"));
                     document.setDescription(rs.getString("Description"));
-                    document.setCoverImage(rs.getBinaryStream("Image"));
+                    document.setCoverImageUrl(rs.getString("Image"));
                     document.setRating(rs.getDouble("Rating"));
                     document.setReviewCount(rs.getInt("NumberOfRatings"));
                     return document;
@@ -179,41 +172,20 @@ public final class BookDao {
         return ids;
     }
 
-    public void setBookImage(int bookId, String imagePath) throws SQLException, IOException {
+    /**
+     * Set the book image column to the provided image URL.
+     * This stores the URL string in the Image column (TEXT).
+     */
+    public void setBookImageUrl(int bookId, String imageUrl) throws SQLException {
         String query = "UPDATE Book SET Image = ? WHERE ID = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
-                PreparedStatement stmt = conn.prepareStatement(query);
-                FileInputStream fis = new FileInputStream(imagePath)) {
-            stmt.setBinaryStream(1, fis, (int) new File(imagePath).length());
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, imageUrl);
             stmt.setInt(2, bookId);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new SQLException("Error setting book image" + e.getMessage(), e);
-        } catch (IOException e) {
-            throw new IOException("Error reading image file" + e.getMessage(), e);
+            throw new SQLException("Error setting book image URL" + e.getMessage(), e);
         }
-    }
-
-    public void setBookImageByURL(int id, String imageUrl) throws SQLException, IOException, URISyntaxException {
-        String query = "UPDATE Book SET Image = ? WHERE ID = ?";
-        ThreadManager.submitSqlTask(() -> {
-            try (Connection conn = DatabaseConnection.getInstance().getConnection();
-                    PreparedStatement stmt = conn.prepareStatement(query)) {
-
-                // Open connection to the image URL
-                URI uri = new URI(imageUrl);
-                URL url = uri.toURL();
-                HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-                httpConn.setRequestMethod("GET");
-                InputStream inputStream = httpConn.getInputStream();
-
-                stmt.setBinaryStream(1, inputStream, httpConn.getContentLength());
-                stmt.setInt(2, id);
-                stmt.executeUpdate();
-            } catch (URISyntaxException | SQLException | IOException e) {
-                throw new RuntimeException(e.getMessage());
-            }
-        });
     }
 
     public void setDescription(int id, String description) throws SQLException {
@@ -256,7 +228,7 @@ public final class BookDao {
                         rs.getInt("YearPublished"),
                         rs.getInt("AvailableCopies"));
                 document.setDescription(rs.getString("Description"));
-                document.setCoverImage(rs.getBinaryStream("Image"));
+                document.setCoverImageUrl(rs.getString("Image"));
                 document.setRating(rs.getDouble("Rating"));
                 document.setReviewCount(rs.getInt("NumberOfRatings"));
                 topRatedBooks.add(document);
@@ -334,7 +306,7 @@ public final class BookDao {
                             rs.getInt("AvailableCopies") // Thêm AvailableCopies nếu cần
                     );
                     document.setDescription(rs.getString("Description")); // Thêm Description nếu cần
-                    document.setCoverImage(rs.getBinaryStream("Image")); // Thêm Image nếu cần
+                    document.setCoverImageUrl(rs.getString("Image")); // Thêm Image nếu cần
                     document.setRating(rs.getDouble("Rating")); // Thêm Rating nếu cần
                     document.setReviewCount(rs.getInt("NumberOfRatings")); // Thêm NumberOfRatings nếu cần
                     recommendedBooks.add(document);
@@ -386,7 +358,7 @@ public final class BookDao {
                         rs.getInt("YearPublished"),
                         rs.getInt("AvailableCopies"));
                 document.setDescription(rs.getString("Description"));
-                document.setCoverImage(rs.getBinaryStream("Image"));
+                document.setCoverImageUrl(rs.getString("Image"));
                 document.setRating(rs.getDouble("Rating"));
                 document.setReviewCount(rs.getInt("NumberOfRatings"));
                 trendingBooks.add(document);
@@ -417,7 +389,7 @@ public final class BookDao {
                         rs.getInt("YearPublished"),
                         rs.getInt("AvailableCopies"));
                 document.setDescription(rs.getString("Description"));
-                document.setCoverImage(rs.getBinaryStream("Image"));
+                document.setCoverImageUrl(rs.getString("Image"));
                 document.setRating(rs.getInt("Rating"));
                 document.setReviewCount(rs.getInt("NumberOfRatings"));
                 synchronized (documents) {
@@ -472,7 +444,7 @@ public final class BookDao {
                         rs.getInt("YearPublished"),
                         rs.getInt("AvailableCopies"));
                 document.setDescription(rs.getString("Description"));
-                document.setCoverImage(rs.getBinaryStream("Image"));
+                document.setCoverImageUrl(rs.getString("Image"));
                 document.setRating(rs.getInt("Rating"));
                 document.setReviewCount(rs.getInt("NumberOfRatings"));
                 synchronized (documents) {

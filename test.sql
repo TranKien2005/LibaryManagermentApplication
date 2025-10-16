@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS Book (
     Publisher VARCHAR(100), -- nhà sản xuất
     YearPublished YEAR, -- năm phát hành
     AvailableCopies INT NOT NULL CHECK (AvailableCopies >= 0),
-    Image LONGBLOB DEFAULT NULL, -- Lưu trữ hình ảnh dưới dạng BLOB
+    Image TEXT DEFAULT NULL, -- Lưu trữ đường dẫn/URL ảnh (thay vì BLOB)
     Description TEXT DEFAULT NULL,
     Rating FLOAT DEFAULT 0 CHECK (Rating >= 0 AND Rating <= 5),
     NumberOfRatings INT DEFAULT 0 CHECK (NumberOfRatings >= 0)

@@ -19,6 +19,10 @@ public class Account {
         this.password = password;
     }
 
+    public Account() {
+        //TODO Auto-generated constructor stub
+    }
+
     // Getters and setters
     public String getUsername() {
         return username;
@@ -46,5 +50,10 @@ public class Account {
 
     public int getAccountID() {
         return accountID;
+    }
+
+    public void setAccountID(Integer id) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setAccountID'");
     }
 }

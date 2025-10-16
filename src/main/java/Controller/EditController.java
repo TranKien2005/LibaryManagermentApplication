@@ -1,11 +1,11 @@
 package Controller;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import DAO.BookDao;
+import Main.Main;
+import data.BookRepository;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -32,7 +32,7 @@ public class EditController extends menuController {
     @FXML
     private TextField quantityField;
 
-    private final BookDao bookDao;
+    private final BookRepository bookRepository;
     private Consumer<Void> onEditSuccess; // Callback
 
     public void setSearchField(Document book) {
@@ -41,7 +41,7 @@ public class EditController extends menuController {
     }
 
     public EditController() {
-        this.bookDao = BookDao.getInstance();
+        this.bookRepository = Main.appContainer.getBookRepository();
     }
 
     public void setOnEditSuccess(Consumer<Void> onEditSuccess) {
@@ -54,11 +54,7 @@ public class EditController extends menuController {
     @FXML
     public void initialize() {
         suggestionListView.setVisible(false);
-        try {
-            bookList = BookDao.getInstance().getAll();
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Lỗi", "Đã xảy ra lỗi khi tải danh sách sách: " + e.getMessage(), null);
-        }
+        bookList = bookRepository.getAll().join();
 
         final long[] lastTypingTime = { System.currentTimeMillis() };
         final long typingDelay = 100;
@@ -104,7 +100,7 @@ public class EditController extends menuController {
             return;
         }
         try {
-            Document document = bookDao.get(ID);
+            Document document = bookRepository.get(ID).join();
             if (document != null) {
                 titleField.setText(document.getTitle());
                 authorField.setText(document.getAuthor());
@@ -113,8 +109,6 @@ public class EditController extends menuController {
                 yearField.setText(String.valueOf(document.getYearPublished()));
                 quantityField.setText(String.valueOf(document.getAvailableCopies()));
             }
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Lỗi", e.getMessage(), null);
         } catch (Exception e) {
             util.ErrorDialog.showError("Lỗi", e.getMessage(), null);
         }
@@ -165,7 +159,7 @@ public class EditController extends menuController {
             System.out.println("Quantity: " + quantity);
 
             Document updatedDocument = new Document(title, author, category, publisher, year, quantity);
-            bookDao.update(updatedDocument, ID);
+            bookRepository.update(updatedDocument, ID);
             util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được cập nhật.", null);
             handleCancel();
             if (onEditSuccess != null) {
@@ -174,8 +168,6 @@ public class EditController extends menuController {
 
         } catch (NumberFormatException e) {
             util.ErrorDialog.showError("Lỗi", "Năm và số lượng phải là số nguyên hợp lệ.", null);
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Lỗi", "Đã xảy ra lỗi khi cập nhật cơ sở dữ liệu: " + e.getMessage(), null);
         } catch (Exception e) {
             util.ErrorDialog.showError("Lỗi", "Đã xảy ra lỗi khi cập nhật tài liệu.", null);
         }
