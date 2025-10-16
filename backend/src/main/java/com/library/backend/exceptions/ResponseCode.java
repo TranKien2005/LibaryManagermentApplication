@@ -17,6 +17,7 @@ public enum ResponseCode {
     MANAGER_NOT_FOUND("Manager does not exist in the system."),
     USER_NOT_FOUND("User does not exist in the system."),
 
+    UNAUTHENTICATE("Invalid password."),
     NOT_ENOUGH_BOOK("System doesn't have enough books."),
     UNKNOWN_ERROR("Unknown error.");
 

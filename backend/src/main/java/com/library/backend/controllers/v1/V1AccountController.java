@@ -5,6 +5,7 @@ import com.library.backend.dtos.responses.*;
 import com.library.backend.entities.Student;
 import com.library.backend.exceptions.GeneralException;
 import com.library.backend.exceptions.ResponseCode;
+import com.library.backend.services.AuthService;
 import com.library.backend.services.ManagerService;
 import com.library.backend.services.StudentService;
 import com.library.backend.services.UserService;
@@ -28,6 +29,7 @@ public class V1AccountController {
     UserService userService;
     ManagerService managerService;
     StudentService studentService;
+    AuthService authService;
 
     @GetMapping
     ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAll() {
@@ -122,9 +124,9 @@ public class V1AccountController {
         return ResponseEntity.ok().body(ApiResponse.success(res));
     }
 
-    @GetMapping("/by-username")
+    @GetMapping("/by-username/{username}")
     ResponseEntity<ApiResponse<Map<String, Object>>> getByUsername(
-            @RequestParam String username
+            @PathVariable String username
     ) {
         UserDetailResponse userDetailResponse = userService.getByUsername(username);
         String type = "User";
@@ -143,17 +145,65 @@ public class V1AccountController {
         );
     }
 
+    @GetMapping("/exists/{username}")
+    ResponseEntity<ApiResponse<Boolean>> isUsernameExists(
+            @PathVariable String username
+    ) {
+        Boolean out = userService.existsByUsername(username);
+        return ResponseEntity.ok().body(ApiResponse.success(out));
+    }
+
     @PutMapping("/{id}/password")
     ResponseEntity<ApiResponse<Void>> updatePassword(
             @PathVariable Integer id,
             @RequestBody Map<String, Object> request
     ) {
-        String password = (String) request.get("password");
+        String password = (String) request.get("newPassword");
         UserDetailResponse userDetailResponse = userService.update(
                 id,
                 UserUpdateRequest.builder().password(password).build()
         );
         return ResponseEntity.ok().body(null);
+    }
+
+    @PostMapping("/register")
+    ResponseEntity<ApiResponse<Map<String, Object>>> register(
+            @RequestBody Map<String, Object> request
+    ) {
+        String type = (String) request.get("accountType");
+        if (!type.equals("User") && !type.equals("Manager")) {
+            throw new GeneralException(ResponseCode.UNKNOWN_ERROR);
+        }
+        Map<String, Object> map = new HashMap<>();
+        UserDetailResponse userDetailResponse = userService.create(
+                UserCreationRequest.builder()
+                        .username((String) request.get("username"))
+                        .password((String) request.get("password"))
+                        .build()
+        );
+        if (type.equals("User")) {
+            StudentDetailResponse response = studentService.create(
+                    StudentCreationRequest.builder()
+                            .userId(userDetailResponse.getId())
+                            .build()
+            );
+            map.put("accountID", response.getId());
+            map.put("username", "****");
+            map.put("password", "****");
+            map.put("accountType", "User");
+        }
+        else {
+            ManagerDetailResponse response = managerService.create(
+                    ManagerCreationRequest.builder()
+                            .userId(userDetailResponse.getId())
+                            .build()
+            );
+            map.put("accountID", response.getId());
+            map.put("username", "****");
+            map.put("password", "****");
+            map.put("accountType", "Manager");
+        }
+        return ResponseEntity.ok().body(ApiResponse.success(map));
     }
 
     @PostMapping("/get-id")
@@ -174,6 +224,14 @@ public class V1AccountController {
             ManagerDetailResponse manager = managerService.getByUsernameAndPassword(username, password);
             return ResponseEntity.ok().body(ApiResponse.success(manager.getId()));
         }
+    }
+
+    @PostMapping("/login")
+    ResponseEntity<ApiResponse<String>> login(
+            @RequestBody Map<String, Object> request
+    ) {
+        AuthResponse response = authService.login((String) request.get("username"), (String) request.get("password"));
+        return ResponseEntity.ok().body(ApiResponse.success(response.getAccountType()));
     }
 
 }

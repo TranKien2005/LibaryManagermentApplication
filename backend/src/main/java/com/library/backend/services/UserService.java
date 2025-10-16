@@ -59,6 +59,10 @@ public class UserService {
         return userMapper.toUserDetailResponse(user);
     }
 
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
     public boolean isInit() {
         long count = userRepository.count();
         return count > 0;
