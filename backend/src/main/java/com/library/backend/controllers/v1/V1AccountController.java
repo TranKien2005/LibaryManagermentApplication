@@ -39,16 +39,16 @@ public class V1AccountController {
         for (StudentDetailResponse student:students) {
             Map<String, Object> res = new HashMap<>();
             res.put("accountID", student.getId());
-            res.put("username", "****");
-            res.put("password", "****");
+            res.put("username", student.getUsername());
+            res.put("password", student.getPassword());
             res.put("accountType", "User");
             list.add(res);
         }
         for (ManagerDetailResponse manager:managers) {
             Map<String, Object> res = new HashMap<>();
             res.put("accountID", manager.getId());
-            res.put("username", "****");
-            res.put("password", "****");
+            res.put("username", manager.getUsername());
+            res.put("password", manager.getPassword());
             res.put("accountType", "Manager");
             list.add(res);
         }
@@ -118,8 +118,8 @@ public class V1AccountController {
             type = "Manager";
         }
         res.put("accountID", response.getId());
-        res.put("username", "****");
-        res.put("password", "****");
+        res.put("username", response.getUsername());
+        res.put("password", response.getPassword());
         res.put("accountType", type);
         return ResponseEntity.ok().body(ApiResponse.success(res));
     }
@@ -137,8 +137,8 @@ public class V1AccountController {
         catch (GeneralException ignored) {}
         Map<String, Object> res = new HashMap<>();
         res.put("accountID", userDetailResponse.getId());
-        res.put("username", "****");
-        res.put("password", "****");
+        res.put("username", userDetailResponse.getUsername());
+        res.put("password", userDetailResponse.getPassword());
         res.put("accountType", type);
         return ResponseEntity.ok().body(
                 ApiResponse.success(res)
@@ -188,8 +188,8 @@ public class V1AccountController {
                             .build()
             );
             map.put("accountID", response.getId());
-            map.put("username", "****");
-            map.put("password", "****");
+            map.put("username", response.getUsername());
+            map.put("password", response.getPassword());
             map.put("accountType", "User");
         }
         else {
@@ -199,8 +199,8 @@ public class V1AccountController {
                             .build()
             );
             map.put("accountID", response.getId());
-            map.put("username", "****");
-            map.put("password", "****");
+            map.put("username", response.getUsername());
+            map.put("password", response.getPassword());
             map.put("accountType", "Manager");
         }
         return ResponseEntity.ok().body(ApiResponse.success(map));

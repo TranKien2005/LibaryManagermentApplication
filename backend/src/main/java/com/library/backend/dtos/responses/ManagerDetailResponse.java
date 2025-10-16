@@ -13,4 +13,6 @@ public class ManagerDetailResponse {
     String fullName;
     String phone;
     String email;
+    String username;
+    String password;
 }

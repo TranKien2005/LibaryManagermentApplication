@@ -13,4 +13,6 @@ public class UserDetailResponse {
     String fullName;
     String email;
     String phone;
+    String username;
+    String password;
 }

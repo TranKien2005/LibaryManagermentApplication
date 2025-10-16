@@ -37,6 +37,8 @@ public class StudentService {
                 .fullName(student.getUser().getFullName())
                 .email(student.getUser().getEmail())
                 .phone(student.getUser().getPhone())
+                .username(student.getUser().getUsername())
+                .password(student.getUser().getPassword())
                 .build();
     }
 
@@ -48,6 +50,8 @@ public class StudentService {
                 .fullName(student.getUser().getFullName())
                 .email(student.getUser().getEmail())
                 .phone(student.getUser().getPhone())
+                .username(student.getUser().getUsername())
+                .password(student.getUser().getPassword())
                 .build();
     }
 
@@ -64,6 +68,8 @@ public class StudentService {
                         .fullName(student.getUser().getFullName())
                         .email(student.getUser().getEmail())
                         .phone(student.getUser().getPhone())
+                        .username(student.getUser().getUsername())
+                        .password(student.getUser().getPassword())
                         .build()
         ).toList();
     }
@@ -76,6 +82,8 @@ public class StudentService {
                 .fullName(student.getUser().getFullName())
                 .email(student.getUser().getEmail())
                 .phone(student.getUser().getPhone())
+                .username(student.getUser().getUsername())
+                .password(student.getUser().getPassword())
                 .build();
     }
 

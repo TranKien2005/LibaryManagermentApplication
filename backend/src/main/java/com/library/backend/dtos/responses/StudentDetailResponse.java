@@ -14,5 +14,7 @@ public class StudentDetailResponse {
     String fullName;
     String phone;
     String email;
+    String username;
+    String password;
 
 }
