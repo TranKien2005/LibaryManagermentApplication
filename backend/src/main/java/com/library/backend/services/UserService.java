@@ -40,6 +40,7 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new GeneralException(ResponseCode.USER_NOT_FOUND));
         userMapper.update(user, request);
+        user = userRepository.save(user);
         return userMapper.toUserDetailResponse(user);
     }
 

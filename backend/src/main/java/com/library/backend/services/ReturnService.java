@@ -48,6 +48,8 @@ public class ReturnService {
         Return r = returnMapper.toReturn(request);
         r.setReturnDate(LocalDate.now());
         r.setBorrow(borrow);
+        r.setReturnDate(LocalDate.now());
+        r.setDamagePercentage(0);
         r = returnRepository.save(r);
         return returnMapper.toReturnDetailResponse(r);
     }

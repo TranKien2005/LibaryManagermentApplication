@@ -44,6 +44,8 @@ public class BookService {
 
     public BookDetailResponse create(BookCreationRequest request) {
         Book book = bookMapper.toBook(request);
+        book.setRating(0.0);
+        book.setReviewCount(0);
         book = bookRepository.save(book);
         return bookMapper.toBookDetailResponse(book);
     }

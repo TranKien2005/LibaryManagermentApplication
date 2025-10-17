@@ -46,6 +46,8 @@ public class ManagerService {
                 .fullName(manager.getUser().getFullName())
                 .email(manager.getUser().getEmail())
                 .phone(manager.getUser().getPhone())
+                .username(manager.getUser().getUsername())
+                .password(manager.getUser().getPassword())
                 .build();
     }
 
@@ -62,6 +64,8 @@ public class ManagerService {
                         .fullName(manager.getUser().getFullName())
                         .email(manager.getUser().getEmail())
                         .phone(manager.getUser().getPhone())
+                        .username(manager.getUser().getUsername())
+                        .password(manager.getUser().getPassword())
                         .build()
         ).toList();
     }
@@ -78,6 +82,8 @@ public class ManagerService {
                 .fullName(manager.getUser().getFullName())
                 .email(manager.getUser().getEmail())
                 .phone(manager.getUser().getPhone())
+                .username(manager.getUser().getUsername())
+                .password(manager.getUser().getPassword())
                 .build();
     }
 
