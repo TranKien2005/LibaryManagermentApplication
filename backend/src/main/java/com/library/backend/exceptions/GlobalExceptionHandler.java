@@ -10,6 +10,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(GeneralException.class)
     ResponseEntity<ApiResponse<Object>> handleGeneralException(GeneralException e) {
+        e.printStackTrace();
         ResponseCode code = e.getCode();
         ApiResponse<Object> response = ApiResponse.builder()
                 .success(false)
@@ -19,6 +20,7 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(RuntimeException.class)
     ResponseEntity<ApiResponse<Object>> handleRuntimeException(RuntimeException e) {
+e.printStackTrace();
         ApiResponse<Object> response = ApiResponse.builder()
                 .success(false)
                 .message(ResponseCode.UNKNOWN_ERROR.getMessage())

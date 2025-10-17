@@ -197,4 +197,9 @@ public class BookService {
         return bookRepository.count() > 0;
     }
 
+    public Page<BookDetailResponse> getByYearPublished(Pageable pageable) {
+        Page<Book> books = bookRepository.findAllByOrderByYearPublishedDesc(pageable);
+        return books.map(bookMapper::toBookDetailResponse);
+    }
+
 }

@@ -311,5 +311,33 @@ public class V1BookController {
         ));
     }
 
+    @GetMapping("/new-arrivals")
+    ResponseEntity<ApiResponse<List<Map<String, Object>>>> getNewArrivals(
+            @RequestParam Integer page,
+            @RequestParam Integer size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("yearPublished").descending());
+        Page<BookDetailResponse> books = bookService.getBooks(pageable);
+        List<BookDetailResponse> list = books.getContent();
+        return ResponseEntity.ok().body(ApiResponse.success(
+                list.stream().map(response -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("title", response.getTitle());
+                    map.put("author", response.getAuthor());
+                    map.put("category", response.getCategory());
+                    map.put("publisher", response.getPublisher());
+                    map.put("yearPublished", response.getYearPublished());
+                    map.put("availableCopies", response.getAvailableCopies());
+                    map.put("bookID", response.getId());
+                    map.put("description", response.getDescription());
+                    map.put("rating", response.getRating());
+                    map.put("reviewCount", response.getReviewCount());
+                    map.put("coverImageUrl", response.getCoverImageUrl());
+                    return map;
+                }).toList()
+        ));
+    }
+
+
 
 }

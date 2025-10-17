@@ -22,4 +22,6 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
             Integer availableCopies
     );
 
+    Page<Book> findAllByOrderByYearPublishedDesc(Pageable pageable);
+
 }
