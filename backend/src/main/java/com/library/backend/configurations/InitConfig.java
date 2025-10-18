@@ -91,7 +91,7 @@ public class InitConfig {
                                 "Nguyen Van A",
                                 "Công nghệ thông tin",
                                 "NXB Trẻ",
-                                "2020",
+                                2020,
                                 5,
                                 "Sách hướng dẫn chi tiết lập trình Java.",
                                 "https://book.sachgiai.com/uploads/book/sach-giao-khoa-tieng-viet-1-tap-1/tieng-viet-1-tap-1-0.jpg"
@@ -101,7 +101,7 @@ public class InitConfig {
                                 "Tran Thi B",
                                 "Công nghệ thông tin",
                                 "NXB Giáo dục",
-                                "2021",
+                                2021,
                                 3,
                                 "Học Python nhanh chóng và thực hành nhiều bài tập.",
                                 "https://book.sachgiai.com/uploads/book/sach-giao-khoa-tieng-viet-1-tap-1/tieng-viet-1-tap-1-0.jpg"
@@ -111,7 +111,7 @@ public class InitConfig {
                                 "Le Van C",
                                 "Công nghệ thông tin",
                                 "NXB Khoa học",
-                                "2019",
+                                2019,
                                 4,
                                 "Giải thích các cấu trúc dữ liệu và thuật toán cơ bản.",
                                 "https://book.sachgiai.com/uploads/book/sach-giao-khoa-tieng-viet-1-tap-1/tieng-viet-1-tap-1-0.jpg"
@@ -121,7 +121,7 @@ public class InitConfig {
                                 "Pham Thi D",
                                 "Web Development",
                                 "NXB Trẻ",
-                                "2022",
+                                2022,
                                 6,
                                 "Hướng dẫn thiết kế giao diện web chuyên nghiệp.",
                                 "https://book.sachgiai.com/uploads/book/sach-giao-khoa-tieng-viet-1-tap-1/tieng-viet-1-tap-1-0.jpg"
@@ -131,7 +131,7 @@ public class InitConfig {
                                 "Hoang Van E",
                                 "AI & Machine Learning",
                                 "NXB Giáo dục",
-                                "2023",
+                                2023,
                                 2,
                                 "Giới thiệu các khái niệm cơ bản về Machine Learning.",
                                 "https://book.sachgiai.com/uploads/book/sach-giao-khoa-tieng-viet-1-tap-1/tieng-viet-1-tap-1-0.jpg"

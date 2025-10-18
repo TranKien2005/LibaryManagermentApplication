@@ -14,7 +14,7 @@ public class BookCreationRequest {
     String author;
     String category;
     String publisher;
-    String yearPublished;
+    Integer yearPublished;
     Integer availableCopies;
     String description;
     String coverImageUrl;

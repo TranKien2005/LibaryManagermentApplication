@@ -59,7 +59,7 @@ public class V1BookController {
                 .author((String) request.get("author"))
                 .category((String) request.get("category"))
                 .publisher((String) request.get("publisher"))
-                .yearPublished((String) request.get("yearPublished"))
+                .yearPublished((Integer) request.get("yearPublished"))
                 .availableCopies((Integer) request.get("availableCopies"))
                 .description((String) request.get("description"))
                 .coverImageUrl((String) request.get("coverImageUrl"))
@@ -77,7 +77,7 @@ public class V1BookController {
                 .title((String) request.get("title"))
                 .description((String) request.get("description"))
                 .publisher((String) request.get("publisher"))
-                .yearPublished((String) request.get("yearPublished"))
+                .yearPublished((Integer) request.get("yearPublished"))
                 .coverImageUrl((String) request.get("coverImageUrl"))
                 .author((String) request.get("author"))
                 .availableCopies((Integer) request.get("availableCopies"))
@@ -285,13 +285,13 @@ public class V1BookController {
 //        ));
 //    }
 
-    @GetMapping("/search-new")
+    @GetMapping("/search")
     ResponseEntity<ApiResponse<List<Map<String, Object>>>> search(
             @RequestParam String query,
             @RequestParam Integer page,
-            @RequestParam Integer pageSize
+            @RequestParam Integer size
     ) {
-        List<BookDetailResponse> list = bookService.search(query, page, pageSize);
+        List<BookDetailResponse> list = bookService.search(query, page, size);
         return ResponseEntity.ok().body(ApiResponse.success(
                 list.stream().map(response -> {
                     Map<String, Object> map = new HashMap<>();

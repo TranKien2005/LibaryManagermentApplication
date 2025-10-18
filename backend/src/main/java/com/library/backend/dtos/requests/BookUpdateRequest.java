@@ -13,7 +13,7 @@ public class BookUpdateRequest {
     String author;
     String category;
     String publisher;
-    String yearPublished;
+    Integer yearPublished;
     Integer availableCopies;
     String coverImageUrl;
     String description;
