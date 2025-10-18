@@ -84,8 +84,8 @@ public class MenuService {
             if (borrow == null) {
                 return CompletableFuture.failedFuture(new IllegalStateException("Selected borrow record not found."));
             }
-            return returnRepository.get(borrow.getBorrowID()).thenCompose(existingReturn -> {
-                if (existingReturn != null) {
+            return borrowReturnRepository.isBorrowed(borrow.getAccountID(), borrow.getBookID()).thenCompose(isBorrowed -> {
+                if (Boolean.TRUE.equals(isBorrowed)) {
                     return CompletableFuture.failedFuture(new IllegalStateException("This document has already been returned."));
                 }
                 int damagePercentage = (int) (Math.random() * 100);

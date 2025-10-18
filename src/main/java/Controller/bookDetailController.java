@@ -264,7 +264,6 @@ public class bookDetailController {
                 bookRepository.update(book, book.getBookID()).join();
             } else {
                 bookRepository.addRating(book.getBookID(), rating);
-                book = bookRepository.get(book.getBookID()).join();
             }
             updateBookDetails();
             ErrorDialog.showSuccess("Success", "Rating added successfully.", null);
@@ -272,6 +271,7 @@ public class bookDetailController {
             e.printStackTrace();
             util.ErrorDialog.showError("Database Error", e.getMessage(), null);
         }
+        reload();
     }
 
     private void updateStarDisplay() {
@@ -302,6 +302,16 @@ public class bookDetailController {
         } catch (Exception e) {
             e.printStackTrace();
             util.ErrorDialog.showError("Error", "Có lỗi xảy ra khi tải mã QR.", null);
+        }
+    }
+
+    private void reload() {
+        try {
+            book = bookRepository.get(book.getBookID()).join();
+            updateBookDetails();
+        } catch (Exception e) {
+            e.printStackTrace();
+            util.ErrorDialog.showError("Database Error", e.getMessage(), null);
         }
     }
 }

@@ -363,7 +363,7 @@ public class menuUserController {
             util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được mượn thành công.",
                     (Stage) cbDocuments.getScene().getWindow());
 
-            handleReload();
+            
         } catch (SQLException e) {
             e.printStackTrace();
             util.ErrorDialog.showError("Database Error", e.getMessage(), (Stage) cbDocuments.getScene().getWindow());
@@ -375,7 +375,7 @@ public class menuUserController {
             e.printStackTrace();
             util.ErrorDialog.showError("Error", e.getMessage(), (Stage) cbDocuments.getScene().getWindow());
         }
-
+        handleReload();
     }
 
     @FXML

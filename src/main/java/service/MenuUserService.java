@@ -72,13 +72,16 @@ public class MenuUserService {
             throw new IllegalArgumentException("Borrow record not found.");
         }
 
-        Return existingReturnRecord = returnRepository.get(selectedBorrow.getBorrowID()).join();
-        if (existingReturnRecord != null) {
-            throw new IllegalStateException("Document already returned.");
+        
+        Boolean isBorrowed = borrowReturnRepository.isBorrowed(selectedBorrow.getAccountID(), selectedBorrow.getBookID()).join();
+        if (!isBorrowed) {
+            throw new IllegalStateException("This document has already been returned.");
         }
-
+        
         int damagePercentage = (int) (Math.random() * 100);
-        Return returnRecord = new Return(borrowRepository.getID(selectedBorrow).join(), LocalDate.now(), damagePercentage);
+        // We already have the borrowId from the parameter; avoid calling borrowRepository.getID(selectedBorrow)
+        // which falls back to BaseHttpApi.getID() and throws UnsupportedOperationException.
+        Return returnRecord = new Return(borrowId, LocalDate.now(), damagePercentage);
         returnRepository.insert(returnRecord).join();
     }
 

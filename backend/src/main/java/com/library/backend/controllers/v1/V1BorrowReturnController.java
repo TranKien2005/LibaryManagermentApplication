@@ -3,7 +3,6 @@ package com.library.backend.controllers.v1;
 import com.library.backend.dtos.responses.ApiResponse;
 import com.library.backend.dtos.responses.ReturnDetailResponse;
 import com.library.backend.services.BorrowService;
-import com.library.backend.services.ReturnService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,12 +22,11 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class V1BorrowReturnController {
 
-    ReturnService returnService;
     BorrowService borrowService;
 
     @GetMapping
     ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAll() {
-        List<ReturnDetailResponse> list = returnService.getAll();
+    List<ReturnDetailResponse> list = borrowService.getAllBorrowReturns();
         return ResponseEntity.ok().body(ApiResponse.success(
                 list.stream().map(
                         response -> {
@@ -60,11 +58,11 @@ public class V1BorrowReturnController {
         ));
     }
 
-    @GetMapping("/by-account")
+    @GetMapping("/by-account/{accountId}")
     ResponseEntity<ApiResponse<List<Map<String, Object>>>> getByAccountId(
-            @PathVariable Integer accountId
+        @PathVariable Integer accountId
     ) {
-        List<ReturnDetailResponse> list = returnService.getByStudentId(accountId);
+    List<ReturnDetailResponse> list = borrowService.getBorrowReturnsByStudentId(accountId);
         return ResponseEntity.ok().body(ApiResponse.success(
                 list.stream().map(
                         response -> {

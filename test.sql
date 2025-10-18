@@ -651,3 +651,22 @@ FROM
         Book bk ON b.BookID = bk.ID
     LEFT JOIN 
         ReturnTable rt ON b.BorrowID = rt.BorrowID;
+-- SELECT TABLE_NAME, CONSTRAINT_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
+-- FROM information_schema.KEY_COLUMN_USAGE
+-- WHERE TABLE_SCHEMA = 'librarymanagement'
+--   AND REFERENCED_TABLE_NAME IS NOT NULL;
+
+-- USE `librarymanagement`;
+
+-- ALTER TABLE `borrow` DROP FOREIGN KEY `borrow_ibfk_1`;
+-- ALTER TABLE `borrow` DROP FOREIGN KEY `borrow_ibfk_2`;
+-- ALTER TABLE `borrows` DROP FOREIGN KEY `FK10408u61vbofhpgaq4kuy927y`;
+-- ALTER TABLE `borrows` DROP FOREIGN KEY `FK8789wjikihu9ocbhamiw789y9`;
+-- ALTER TABLE `borrows` DROP FOREIGN KEY `FK_borrows_book`;
+-- ALTER TABLE `manager` DROP FOREIGN KEY `manager_ibfk_1`;
+-- ALTER TABLE `managers` DROP FOREIGN KEY `FKsp1db43yf1nqhswrpbwmlnhb9`;
+-- ALTER TABLE `returns` DROP FOREIGN KEY `FKvwjwcsgx96v0p6len1enqr2m`;
+-- ALTER TABLE `returns` DROP FOREIGN KEY `FK_returns_borrow`;
+-- ALTER TABLE `returntable` DROP FOREIGN KEY `returntable_ibfk_1`;
+-- ALTER TABLE `students` DROP FOREIGN KEY `FKdt1cjx5ve5bdabmuuf3ibrwaq`;
+-- ALTER TABLE `user` DROP FOREIGN KEY `user_ibfk_1`;

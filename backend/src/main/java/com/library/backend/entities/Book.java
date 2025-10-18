@@ -30,6 +30,7 @@ public class Book {
     @Column(nullable = false)
     Integer availableCopies = 0;
 
+    @Column(columnDefinition = "TEXT")
     String description;
 
     @Column(nullable = false)
