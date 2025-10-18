@@ -53,7 +53,7 @@ public class V1BorrowService {
         BorrowCreationRequest borrowCreationRequest = BorrowCreationRequest.builder()
                 .bookId((Integer) request.get("bookID"))
                 .studentId((Integer) request.get("accountID"))
-                .expectedReturnDate((LocalDate) request.get("expectedReturnDate"))
+                .expectedReturnDate(LocalDate.parse((String) request.get("expectedReturnDate")))
                 .build();
         BorrowDetailResponse response = borrowService.create(borrowCreationRequest);
         return ResponseEntity.ok().body(ApiResponse.success(null));
@@ -65,7 +65,7 @@ public class V1BorrowService {
             @RequestBody Map<String, Object> request
     ) {
         BorrowUpdateRequest borrowUpdateRequest = BorrowUpdateRequest.builder()
-                .expectedReturnDate((LocalDate) request.get("expectedReturnDate"))
+                .expectedReturnDate(LocalDate.parse((String) request.get("expectedReturnDate")))
                 .status((Borrow.Type) request.get("status"))
                 .build();
         BorrowDetailResponse response = borrowService.update(id, borrowUpdateRequest);
@@ -104,8 +104,8 @@ public class V1BorrowService {
         BorrowDetailResponse response = borrowService.find(
                 (Integer) request.get("accountID"),
                 (Integer) request.get("bookID"),
-                (LocalDate) request.get("borrowDate"),
-                (LocalDate) request.get("expectedReturnDate"),
+                LocalDate.parse((String) request.get("borrowDate")),
+                LocalDate.parse((String) request.get("expectedReturnDate")),
                 (Borrow.Type) request.get("status")
         );
         return ResponseEntity.ok().body(ApiResponse.success(response.getId()));
