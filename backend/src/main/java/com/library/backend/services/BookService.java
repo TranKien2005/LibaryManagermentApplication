@@ -173,7 +173,7 @@ public class BookService {
                             b2.getYearPublished(), b1.getYearPublished()
                     );
                 })
-                .skip((long) (page - 1) * pageSize)
+                .skip((long) page * pageSize)
                 .limit(pageSize)
                 .toList();
         return books.stream().map(bookMapper::toBookDetailResponse).toList();
