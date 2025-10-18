@@ -65,6 +65,7 @@ public class menuController {
         menuService.loadInitialData().whenComplete((initialData, ex) -> {
             if (ex != null) {
                 Platform.runLater(() -> ErrorDialog.showError("Database Error", ex.getMessage(), null));
+                ex.printStackTrace();
             } else {
                 this.bookList = initialData.books;
                 this.userList = initialData.users;
@@ -373,6 +374,7 @@ public class menuController {
                 .whenComplete((v, ex) -> Platform.runLater(() -> {
                     if (ex != null) {
                         ErrorDialog.showError("Database Error", ex.getMessage(), (Stage) taDocumentDetails.getScene().getWindow());
+                        ex.printStackTrace();
                     } else {
                         ErrorDialog.showSuccess("Thành công", "Mô tả đã được thay đổi thành công.", (Stage) taDocumentDetails.getScene().getWindow());
                         handleReload();
@@ -508,6 +510,33 @@ public class menuController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @FXML
+    private void handleChangeCover() {
+        ErrorDialog.showError("Chức năng tạm thời không khả dụng", 
+                "Tính năng thay đổi bìa sách đang được phát triển và tạm thời không khả dụng.", 
+                (Stage) tvDocuments.getScene().getWindow());
+    }
+
+    @FXML
+    private void onAddDocument() {
+        showPane(1); // Show Add panel
+    }
+
+    @FXML
+    private void onDeleteDocument() {
+        showPane(2); // Show Delete panel
+    }
+
+    @FXML
+    private void onEditDocument() {
+        showPane(3); // Show Edit panel
+    }
+
+    @FXML
+    private void onManageMembers() {
+        showPane(4); // Show Member Management panel
     }
 
     private boolean isHandlingQR = false;

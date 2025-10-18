@@ -71,8 +71,10 @@ public class menuUserController {
             borrowReturnList = menuUserService.getBorrowReturnList(accountID);
         } catch (SQLException e) {
             util.ErrorDialog.showError("Database Error", e.getMessage(), null);
+            e.printStackTrace();
         } catch (Exception e) {
             util.ErrorDialog.showError("Error", e.getMessage(), null);
+            e.printStackTrace();
         }
     }
 
@@ -161,8 +163,10 @@ public class menuUserController {
             resetList();
         } catch (SQLException e) {
             util.ErrorDialog.showError("Database Error", e.getMessage(), null);
+            e.printStackTrace();
         } catch (Exception e) {
             util.ErrorDialog.showError("Error", e.getMessage(), null);
+            e.printStackTrace();
         }
 
         // Set text for cbMembers to accountID - fullName of the current user
@@ -367,6 +371,10 @@ public class menuUserController {
             e.printStackTrace();
             util.ErrorDialog.showError("Error", e.getMessage(), (Stage) cbDocuments.getScene().getWindow());
         }
+        catch (Exception e) {
+            e.printStackTrace();
+            util.ErrorDialog.showError("Error", e.getMessage(), (Stage) cbDocuments.getScene().getWindow());
+        }
 
     }
 
@@ -388,9 +396,11 @@ public class menuUserController {
             e.printStackTrace();
             util.ErrorDialog.showError("Database Error", e.getMessage(),
                     (Stage) tvBorrowedDocuments.getScene().getWindow());
+            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
             util.ErrorDialog.showError("Error", e.getMessage(), (Stage) tvBorrowedDocuments.getScene().getWindow());
+            e.printStackTrace();
         }
 
     }

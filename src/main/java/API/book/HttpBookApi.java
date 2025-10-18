@@ -34,19 +34,28 @@ public class HttpBookApi extends BaseHttpApi<Document, Integer> implements BookA
     @Override
     public CompletableFuture<Void> setBookImageUrl(int bookId, String imageUrl) {
         Map<String, String> payload = Map.of("imageUrl", imageUrl);
-        return client.putAsync(baseUrl + resourcePath + "/" + bookId + "/image", payload, Object.class).thenApply(r -> null);
+        return client.putAsync(baseUrl + resourcePath + "/" + bookId + "/image", payload, Object.class).thenApply(r -> { 
+            if (r != null) r.toString(); 
+            return null; 
+        });
     }
 
     @Override
     public CompletableFuture<Void> setDescription(int id, String description) {
         Map<String, String> payload = Map.of("description", description);
-        return client.putAsync(baseUrl + resourcePath + "/" + id + "/description", payload, Object.class).thenApply(r -> null);
+        return client.putAsync(baseUrl + resourcePath + "/" + id + "/description", payload, Object.class).thenApply(r -> { 
+            if (r != null) r.toString(); 
+            return null; 
+        });
     }
 
     @Override
     public CompletableFuture<Void> addRating(int id, int newRating) {
         Map<String, Integer> payload = Map.of("rating", newRating);
-        return client.putAsync(baseUrl + resourcePath + "/" + id + "/rating", payload, Object.class).thenApply(r -> null);
+        return client.putAsync(baseUrl + resourcePath + "/" + id + "/rating", payload, Object.class).thenApply(r -> { 
+            if (r != null) r.toString(); 
+            return null; 
+        });
     }
 
     @Override

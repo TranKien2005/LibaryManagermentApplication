@@ -38,7 +38,10 @@ public class HttpAccountApi extends BaseHttpApi<Account, Integer> implements Acc
     public CompletableFuture<Void> updatePassword(int accountId, String newPassword) {
         Map<String, String> payload = Map.of("newPassword", newPassword);
         return client.putAsync(baseUrl + resourcePath + "/" + accountId + "/password", payload, Object.class)
-                .thenApply(r -> null);
+                .thenApply(r -> { 
+                    if (r != null) r.toString(); 
+                    return null; 
+                });
     }
 
     @Override
