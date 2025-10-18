@@ -11,6 +11,16 @@ import org.mapstruct.ReportingPolicy;
         unmappedTargetPolicy = ReportingPolicy.IGNORE
 )
 public interface StudentMapper {
-    StudentDetailResponse toStudentDetailResponse(Student student);
+    default StudentDetailResponse toStudentDetailResponse(Student student) {
+        StudentDetailResponse response = new StudentDetailResponse();
+        response.setId(student.getUserId());
+        response.setEmail(student.getUser().getEmail());
+        response.setPhone(student.getUser().getPhone());
+        response.setUsername(student.getUser().getUsername());
+        response.setPassword(student.getUser().getPassword());
+        response.setFullName(student.getUser().getFullName());
+        return response;
+    }
     Student toStudent(StudentCreationRequest request);
+
 }

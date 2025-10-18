@@ -14,6 +14,15 @@ import org.mapstruct.ReportingPolicy;
 )
 public interface ManagerMapper {
     Manager toManager(ManagerCreationRequest request);
-    ManagerDetailResponse toManagerDetailResponse(Manager manager);
+    default ManagerDetailResponse toManagerDetailResponse(Manager manager) {
+        return ManagerDetailResponse.builder()
+                .id(manager.getUserId())
+                .phone(manager.getUser().getPhone())
+                .email(manager.getUser().getEmail())
+                .password(manager.getUser().getPassword())
+                .fullName(manager.getUser().getFullName())
+                .username(manager.getUser().getUsername())
+                .build();
+    }
     void extraMap(@MappingTarget ManagerDetailResponse response, User user);
 }

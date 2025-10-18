@@ -12,6 +12,7 @@ import com.library.backend.exceptions.ResponseCode;
 import com.library.backend.mappers.BorrowMapper;
 import com.library.backend.repositories.BookRepository;
 import com.library.backend.repositories.BorrowRepository;
+import com.library.backend.repositories.StudentRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -28,6 +29,7 @@ public class BorrowService {
     BorrowRepository borrowRepository;
     BorrowMapper borrowMapper;
     BookRepository bookRepository;
+    StudentRepository studentRepository;
 
     public List<BorrowDetailResponse> getAll() {
         List<Borrow> borrows = borrowRepository.findAll();
@@ -40,12 +42,15 @@ public class BorrowService {
         if (book.getAvailableCopies() == 0) {
             throw new GeneralException(ResponseCode.NOT_ENOUGH_BOOK);
         }
+        Student student = studentRepository.findById(request.getStudentId())
+                        .orElseThrow(() -> new GeneralException(ResponseCode.STUDENT_NOT_FOUND));
         book.setAvailableCopies(book.getAvailableCopies() - 1);
         bookRepository.save(book);
         Borrow borrow = borrowMapper.toBorrow(request);
-        borrow.setStudent(Student.builder().userId(request.getStudentId()).build());
+        borrow.setStudent(student);
         borrow.setBook(Book.builder().id(request.getBookId()).build());
         borrow.setBorrowDate(LocalDate.now());
+        borrow.setStatus(Borrow.Type.Borrowed);
         borrow = borrowRepository.save(borrow);
         return borrowMapper.toBorrowDetailResponse(borrow);
     }
