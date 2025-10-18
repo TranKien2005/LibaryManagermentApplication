@@ -34,21 +34,14 @@ public class ManagerService {
         manager.setUser(user);
         manager = managerRepository.save(manager);
         ManagerDetailResponse response = managerMapper.toManagerDetailResponse(manager);
-        managerMapper.extraMap(response, manager.getUser());
+//        managerMapper.extraMap(response, manager.getUser());
         return response;
     }
 
     public ManagerDetailResponse getById(Integer id) {
         Manager manager = managerRepository.findById(id)
                 .orElseThrow(() -> new GeneralException(ResponseCode.MANAGER_NOT_FOUND));
-        return ManagerDetailResponse.builder()
-                .id(manager.getUserId())
-                .fullName(manager.getUser().getFullName())
-                .email(manager.getUser().getEmail())
-                .phone(manager.getUser().getPhone())
-                .username(manager.getUser().getUsername())
-                .password(manager.getUser().getPassword())
-                .build();
+        return managerMapper.toManagerDetailResponse(manager);
     }
 
     public List<Integer> getAllIds() {
@@ -58,16 +51,7 @@ public class ManagerService {
 
     public List<ManagerDetailResponse> getAll() {
         List<Manager> managers = managerRepository.findAll();
-        return managers.stream().map(
-                manager -> ManagerDetailResponse.builder()
-                        .id(manager.getUserId())
-                        .fullName(manager.getUser().getFullName())
-                        .email(manager.getUser().getEmail())
-                        .phone(manager.getUser().getPhone())
-                        .username(manager.getUser().getUsername())
-                        .password(manager.getUser().getPassword())
-                        .build()
-        ).toList();
+        return managers.stream().map(managerMapper::toManagerDetailResponse).toList();
     }
 
     public boolean existsById(Integer id) {
@@ -77,14 +61,7 @@ public class ManagerService {
     public ManagerDetailResponse getByUsernameAndPassword(String username, String password) {
         Manager manager = managerRepository.findByUserUsernameAndUserPassword(username, password)
                 .orElseThrow(() -> new GeneralException(ResponseCode.MANAGER_NOT_FOUND));
-        return ManagerDetailResponse.builder()
-                .id(manager.getUserId())
-                .fullName(manager.getUser().getFullName())
-                .email(manager.getUser().getEmail())
-                .phone(manager.getUser().getPhone())
-                .username(manager.getUser().getUsername())
-                .password(manager.getUser().getPassword())
-                .build();
+        return managerMapper.toManagerDetailResponse(manager);
     }
 
     public boolean isInit() {

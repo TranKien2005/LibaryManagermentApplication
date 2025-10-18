@@ -32,27 +32,13 @@ public class StudentService {
         Student student = new Student();
         student.setUser(user);
         student = studentRepository.save(student);
-        return StudentDetailResponse.builder()
-                .id(student.getUserId())
-                .fullName(student.getUser().getFullName())
-                .email(student.getUser().getEmail())
-                .phone(student.getUser().getPhone())
-                .username(student.getUser().getUsername())
-                .password(student.getUser().getPassword())
-                .build();
+        return studentMapper.toStudentDetailResponse(student);
     }
 
     public StudentDetailResponse getById(Integer id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new GeneralException(ResponseCode.STUDENT_NOT_FOUND));
-        return StudentDetailResponse.builder()
-                .id(student.getUserId())
-                .fullName(student.getUser().getFullName())
-                .email(student.getUser().getEmail())
-                .phone(student.getUser().getPhone())
-                .username(student.getUser().getUsername())
-                .password(student.getUser().getPassword())
-                .build();
+        return studentMapper.toStudentDetailResponse(student);
     }
 
     public List<Integer> getAllIds() {
@@ -62,29 +48,13 @@ public class StudentService {
 
     public List<StudentDetailResponse> getAll() {
         List<Student> students = studentRepository.findAll();
-        return students.stream().map(
-                student -> StudentDetailResponse.builder()
-                        .id(student.getUserId())
-                        .fullName(student.getUser().getFullName())
-                        .email(student.getUser().getEmail())
-                        .phone(student.getUser().getPhone())
-                        .username(student.getUser().getUsername())
-                        .password(student.getUser().getPassword())
-                        .build()
-        ).toList();
+        return students.stream().map(studentMapper::toStudentDetailResponse).toList();
     }
 
     public StudentDetailResponse getByUsernameAndPassword(String username, String password) {
         Student student = studentRepository.findByUserUsernameAndUserPassword(username, password)
                 .orElseThrow(() -> new GeneralException(ResponseCode.STUDENT_NOT_FOUND));
-        return StudentDetailResponse.builder()
-                .id(student.getUserId())
-                .fullName(student.getUser().getFullName())
-                .email(student.getUser().getEmail())
-                .phone(student.getUser().getPhone())
-                .username(student.getUser().getUsername())
-                .password(student.getUser().getPassword())
-                .build();
+        return studentMapper.toStudentDetailResponse(student);
     }
 
     public boolean isInit() {
