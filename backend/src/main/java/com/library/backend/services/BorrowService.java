@@ -46,6 +46,7 @@ public class BorrowService {
         borrow.setStudent(Student.builder().userId(request.getStudentId()).build());
         borrow.setBook(Book.builder().id(request.getBookId()).build());
         borrow.setBorrowDate(LocalDate.now());
+        borrow.setStatus(Borrow.Type.Borrowed);
         borrow = borrowRepository.save(borrow);
         return borrowMapper.toBorrowDetailResponse(borrow);
     }
