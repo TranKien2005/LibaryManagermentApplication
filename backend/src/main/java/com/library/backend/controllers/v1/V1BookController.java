@@ -187,7 +187,7 @@ public class V1BookController {
 
     @GetMapping("/top-rated")
     ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTopRatedBooks(
-            @RequestParam(required = false, defaultValue = "20") Integer limit,
+            @RequestParam(required = false, defaultValue = "7") Integer limit,
             @RequestParam(required = false, defaultValue = "0") Integer offset
     ) {
         Pageable pageable = PageRequest.of(offset, limit, Sort.by("rating").descending());
@@ -216,7 +216,7 @@ public class V1BookController {
     ResponseEntity<ApiResponse<List<Map<String, Object>>>> getFavorite(
             @RequestParam Integer accountId
     ) {
-        List<BookDetailResponse> list = bookService.getRecommendedBooks(accountId, 10);
+        List<BookDetailResponse> list = bookService.getRecommendedBooks(accountId, 7);
         return ResponseEntity.ok().body(ApiResponse.success(
                 list.stream().map(response -> {
                     Map<String, Object> map = new HashMap<>();
@@ -238,7 +238,7 @@ public class V1BookController {
 
     @GetMapping("/trending")
     ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTrending() {
-        List<BookDetailResponse> list = bookService.getTrending();
+        List<BookDetailResponse> list = bookService.getTrending(7);
         return ResponseEntity.ok().body(ApiResponse.success(
                 list.stream().map(response -> {
                     Map<String, Object> map = new HashMap<>();

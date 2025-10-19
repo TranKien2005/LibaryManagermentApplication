@@ -17,4 +17,14 @@ public class HttpReturnApi extends BaseHttpApi<Return, Integer> implements Retur
     protected Class<Return> getEntityClass() {
         return Return.class;
     }
+
+    @Override
+    public CompletableFuture<Integer> getID(Return returnObj) {
+        return client.postAsync(baseUrl + resourcePath + "/get-id", returnObj, Integer.class);
+    }
+
+    @Override
+    public CompletableFuture<java.util.List<Integer>> getAllID() {
+        return client.getAsync(baseUrl + resourcePath + "/ids", new com.google.gson.reflect.TypeToken<java.util.List<Integer>>(){}.getType());
+    }
 }

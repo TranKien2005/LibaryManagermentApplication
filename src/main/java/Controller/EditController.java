@@ -167,8 +167,10 @@ public class EditController extends menuController {
             }
 
         } catch (NumberFormatException e) {
+            e.printStackTrace();
             util.ErrorDialog.showError("Lỗi", "Năm và số lượng phải là số nguyên hợp lệ.", null);
         } catch (Exception e) {
+            e.printStackTrace();
             util.ErrorDialog.showError("Lỗi", "Đã xảy ra lỗi khi cập nhật tài liệu.", null);
         }
     }
@@ -187,6 +189,7 @@ public class EditController extends menuController {
     }
 
     public void handleReload() {
+        bookList = bookRepository.getAll().join();
         handleCancel();
     }
 
@@ -196,6 +199,10 @@ public class EditController extends menuController {
 
     public void setBookList(List<Document> bookList) {
         this.bookList = bookList;
+    }
+
+    public void reload() {
+        handleReload();
     }
 
 }

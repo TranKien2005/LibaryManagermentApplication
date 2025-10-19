@@ -67,6 +67,7 @@ public class AddController extends menuController {
             year = Integer.parseInt(yearField.getText());
             quantity = Integer.parseInt(quantityField.getText());
         } catch (NumberFormatException e) {
+            e.printStackTrace();
             util.ErrorDialog.showError("Lỗi", "Định dạng số không hợp lệ.", (Stage) addButton.getScene().getWindow());
             return;
         }

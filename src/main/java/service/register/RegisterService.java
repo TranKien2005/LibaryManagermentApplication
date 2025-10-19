@@ -36,7 +36,6 @@ public class RegisterService {
                 Account newAccount = new Account(username, password, accountType);
                 accountRepository.insert(newAccount).join();
                 int accountId = accountRepository.getID(newAccount).join();
-                newAccount.setAccountID(accountId);
 
                 if ("user".equalsIgnoreCase(accountType)) {
                     User newUser = new User(fullName, email, phone, accountId);

@@ -155,8 +155,10 @@ public class MemberManagementController {
             util.ErrorDialog.showSuccess("Update Successful", "User details have been successfully updated.",
                     (Stage) rootVBox.getScene().getWindow());
         } catch (SQLException e) {
+            e.printStackTrace();
             util.ErrorDialog.showError("Database Error", e.getMessage(), (Stage) rootVBox.getScene().getWindow());
         } catch (Exception e) {
+            e.printStackTrace();
             util.ErrorDialog.showError("Error", e.getMessage(), (Stage) rootVBox.getScene().getWindow());
         }
 

@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import Main.Main;
+import util.ThreadManager;
 import service.HomeService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -53,8 +54,8 @@ public class HomeController {
     private final HomeService homeService;
     private int newArrivalsPage = 0;
     private int searchPage = 0;
-    private static final int PAGE_SIZE = 14;
-    private static final int PAGE_SIZE_SEARCH = 21;
+    private static final int PAGE_SIZE = 7;
+    private static final int PAGE_SIZE_SEARCH = 14;
     private boolean isSearching = false;
     private String currentSearchText = "";
 
@@ -96,22 +97,28 @@ public class HomeController {
             trendingBooks = initialData.trendingBooks;
 
             fpTopBooks.getChildren().clear();
-            for (Document book : topBooks) {
-                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
-                fpTopBooks.getChildren().add(bookItem);
-            }
+            ThreadManager.execute(() -> {
+                for (Document book : topBooks) {
+                    VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
+                    javafx.application.Platform.runLater(() -> fpTopBooks.getChildren().add(bookItem));
+                }
+            });
 
             fpRecommendedBooks.getChildren().clear();
-            for (Document book : favoriteBooks) {
-                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
-                fpRecommendedBooks.getChildren().add(bookItem);
-            }
+            ThreadManager.execute(() -> {
+                for (Document book : favoriteBooks) {
+                    VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
+                    javafx.application.Platform.runLater(() -> fpRecommendedBooks.getChildren().add(bookItem));
+                }
+            });
 
             fpTrendingBooks.getChildren().clear();
-            for (Document book : trendingBooks) {
-                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
-                fpTrendingBooks.getChildren().add(bookItem);
-            }
+            ThreadManager.execute(() -> {
+                for (Document book : trendingBooks) {
+                    VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
+                    javafx.application.Platform.runLater(() -> fpTrendingBooks.getChildren().add(bookItem));
+                }
+            });
 
             loadMoreNewArrivals();
         } catch (SQLException e) {
@@ -204,11 +211,12 @@ public class HomeController {
             throw new SQLException("No more search results to load.");
         }
         fpNewArrivals.getChildren().clear();
+        ThreadManager.execute(() -> {
             for (Document book : searchResults) {
-
-            VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
-            fpNewArrivals.getChildren().add(bookItem);
-        }
+                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
+                javafx.application.Platform.runLater(() -> fpNewArrivals.getChildren().add(bookItem));
+            }
+        });
     }
 
     private void loadMoreNewArrivals() throws SQLException {
@@ -217,10 +225,12 @@ public class HomeController {
             throw new SQLException("No more new arrivals to load.");
         }
         fpNewArrivals.getChildren().clear();
-        for (Document book : newArrivals) {
-            VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
-            fpNewArrivals.getChildren().add(bookItem);
-        }
+        ThreadManager.execute(() -> {
+            for (Document book : newArrivals) {
+                VBox bookItem = createBookItem(book.getTitle(), book.getCoverImageUrl(), book.getRating(), book);
+                javafx.application.Platform.runLater(() -> fpNewArrivals.getChildren().add(bookItem));
+            }
+        });
     }
     private VBox createBookItem(String title, String coverImageUrl, double rating, Document book) {
         VBox vBox = new VBox(10);
@@ -235,6 +245,7 @@ public class HomeController {
                 });
                 imageView.setImage(image);
             } catch (Exception e) {
+                e.printStackTrace();
                 imageView.setImage(new Image("/images/menu/coverArtUnknown.png"));
             }
         } else {

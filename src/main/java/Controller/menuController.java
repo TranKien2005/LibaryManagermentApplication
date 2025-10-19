@@ -251,6 +251,7 @@ public class menuController {
                 Image image = new Image(imageUrl, 120, 180, true, true, true);
                 bookCoverImageView.setImage(image);
             } catch (Exception e) {
+                e.printStackTrace();
                 bookCoverImageView.setImage(defaulImage);
             }
         } else {
@@ -399,6 +400,7 @@ public class menuController {
                     }
                 });
             } catch (Exception e) {
+                e.printStackTrace();
                 Platform.runLater(() -> ErrorDialog.showError("Error", "Failed to fetch book information: " + e.getMessage(), null));
             }
         });
@@ -444,6 +446,7 @@ public class menuController {
                         }
                     }));
         } catch (NumberFormatException e) {
+            e.printStackTrace();
             ErrorDialog.showError("Lỗi", "ID tài liệu hoặc thành viên không hợp lệ.", (Stage) cbDocuments.getScene().getWindow());
         }
     }
@@ -522,21 +525,25 @@ public class menuController {
     @FXML
     private void onAddDocument() {
         showPane(1); // Show Add panel
+        addController.reload();
     }
 
     @FXML
     private void onDeleteDocument() {
         showPane(2); // Show Delete panel
+        deleteController.reload();
     }
 
     @FXML
     private void onEditDocument() {
         showPane(3); // Show Edit panel
+        editController.reload();
     }
 
     @FXML
     private void onManageMembers() {
         showPane(4); // Show Member Management panel
+        memberManagementController.reload();
     }
 
     private boolean isHandlingQR = false;

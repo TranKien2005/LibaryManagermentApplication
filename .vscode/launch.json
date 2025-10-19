@@ -8,12 +8,11 @@
             "mainClass": "${file}"
         },
         {
-            "name": "Run with Maven",
+            "name": "Run Main (JavaFX)",
             "type": "java",
             "request": "launch",
             "mainClass": "Main.Main",
-            "projectName": "demo",
-            "preLaunchTask": "maven-build"
+            "projectName": "demo"
         }
     ]
 }

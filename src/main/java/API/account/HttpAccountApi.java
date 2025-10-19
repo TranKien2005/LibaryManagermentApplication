@@ -62,4 +62,14 @@ public class HttpAccountApi extends BaseHttpApi<Account, Integer> implements Acc
         );
         return client.postAsync(baseUrl + resourcePath + "/login", payload, String.class);
     }
+
+    @Override
+    public CompletableFuture<Integer> getID(Account account) {
+        return client.postAsync(baseUrl + resourcePath + "/get-id", account, Integer.class);
+    }
+
+    @Override
+    public CompletableFuture<java.util.List<Integer>> getAllID() {
+        return client.getAsync(baseUrl + resourcePath + "/ids", new com.google.gson.reflect.TypeToken<java.util.List<Integer>>(){}.getType());
+    }
 }

@@ -116,7 +116,7 @@ public class BookService {
         return recommendedBooks.stream().map(bookMapper::toBookDetailResponse).toList();
     }
 
-    public List<BookDetailResponse> getTrending() {
+    public List<BookDetailResponse> getTrending(int limit) {
         LocalDate oneMonthAgo = LocalDate.now().minusMonths(1);
         List<Book> books = bookRepository.findAll();
         List<Borrow> recentBorrows = borrowRepository.findByBorrowDateAfter(oneMonthAgo);
@@ -132,7 +132,7 @@ public class BookService {
                     }
                     return Double.compare(b2.getRating(), b1.getRating()); // rating desc
                 })
-                .limit(7)
+                .limit(limit)
                 .toList();
         return books.stream().map(bookMapper::toBookDetailResponse).toList();
     }

@@ -102,6 +102,7 @@ public class registerController {
                     }
                 }).exceptionally(ex -> {
                     Platform.runLater(() -> util.ErrorDialog.showError("Registration Failed", ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage(), window));
+                    ex.printStackTrace();
                     return null;
                 });
     }

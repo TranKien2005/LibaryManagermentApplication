@@ -9,6 +9,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import javafx.application.Platform;
+import util.ThreadManager;
 
 public class Main extends Application {
 
@@ -51,11 +53,27 @@ public class Main extends Application {
             }
             stage.getIcons().add(icon);
 
+            stage.setOnCloseRequest(e -> {
+                // Try graceful JavaFX exit
+                Platform.exit();
+                // Ensure background pools will not block
+                ThreadManager.shutdown();
+                // Fallback hard exit to release terminal when necessary
+                System.exit(0);
+            });
             stage.show();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+    }
+
+    @Override
+    public void stop() {
+        // Called by JavaFX when application is stopping
+        try {
+            ThreadManager.shutdown();
+        } catch (Exception ignored) {}
     }
 
     public static void main(String[] args) {

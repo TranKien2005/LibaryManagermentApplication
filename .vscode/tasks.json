@@ -2,12 +2,30 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "kill-java",
+            "type": "shell",
+            "command": "Get-Process java -ErrorAction SilentlyContinue | Stop-Process -Force; exit 0",
+            "presentation": {
+                "reveal": "silent"
+            }
+        },
+        {
             "label": "maven-build",
             "type": "shell",
             "command": "mvn clean install",
+            "dependsOn": ["kill-java"],
             "group": {
                 "kind": "build",
                 "isDefault": true
+            }
+        },
+        {
+            "label": "javafx:run",
+            "type": "shell",
+            "command": "mvn -q -DskipTests javafx:run",
+            "dependsOn": ["kill-java"],
+            "options": {
+                "cwd": "${workspaceFolder}"
             }
         }
     ]

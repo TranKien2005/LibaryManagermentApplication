@@ -1,6 +1,7 @@
 service\ManagerService.class
 service\BorrowService.class
 model\User.class
+util\ThreadManager$1.class
 util\ErrorDialog.class
 service\MemberManagementService.class
 service\MenuUserService.class
@@ -11,7 +12,6 @@ service\MenuService$BookQRResult.class
 Controller\menuUserController$1.class
 model\Account.class
 service\add\AddBookService$BatchAddResult.class
-googleAPI\BookInfo.class
 service\register\RegisterService.class
 QR\QRCodeListener.class
 service\HomeService.class

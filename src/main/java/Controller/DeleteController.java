@@ -63,7 +63,6 @@ public class DeleteController extends menuController {
                 try {
                     Thread.sleep(typingDelay);
                 } catch (InterruptedException e) {
-
                     e.printStackTrace();
                     ErrorDialog.showError("Lỗi", e.getMessage(), (Stage) nameField.getScene().getWindow());
                 }
@@ -157,6 +156,7 @@ public class DeleteController extends menuController {
     }
 
     public void reload() {
+        bookList = bookRepository.getAll().join();
         handleCancel();
     }
 
