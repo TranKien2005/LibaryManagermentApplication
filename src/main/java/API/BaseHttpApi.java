@@ -30,18 +30,12 @@ public abstract class BaseHttpApi<T, ID> implements BaseApi<T, ID> {
 
     @Override
     public CompletableFuture<Void> insert(T t) {
-        return client.postAsync(baseUrl + resourcePath, t, Object.class).thenApply(r -> { 
-            if (r != null) r.toString(); 
-            return null; 
-        });
+        return client.postAsync(baseUrl + resourcePath, t, Object.class).thenApply(r -> null);
     }
 
     @Override
     public CompletableFuture<Void> update(T t, ID id) {
-        return client.putAsync(baseUrl + resourcePath + "/" + id, t, Object.class).thenApply(r -> { 
-            if (r != null) r.toString(); 
-            return null; 
-        });
+        return client.putAsync(baseUrl + resourcePath + "/" + id, t, Object.class).thenApply(r -> null);
     }
 
     @Override
