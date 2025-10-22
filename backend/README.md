@@ -15,449 +15,59 @@ Backend for the Library Management Application, built with **Spring Boot** and *
    docker compose up --build -d
    ```
 
-## APIs
+## Auth
 
-- All failed api return response:
+### POST /api/auth/login
+- This api for getting access_token and refresh_token
+- access_token can live 30 minutes, and refresh_token can live 1 week
+
+Request:
 ```json
 {
-   "success": false,
-   "message": str,
-   "data": None
+  "username": str,
+  "password": str
+}
+```
+Response:
+```json
+{
+  "accountType": "User" | "Manager",
+  "accessToken": str,
+  "refreshToken": str
 }
 ```
 
-### Auth
+### POST /api/auth/refresh
+- This api for getting new access_token when it outdate
 
-#### POST /auth
-- Nhận username, password, trả về account_type
-- Request body:
+Request:
 ```json
 {
-   "username": str,
-   "password": str
-}
-```
-- Response:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": {
-      "acountType": "Student" | "Manager"
-   }
-}
-   ```
-
-### Student
-
-#### GET students/{id}
-- Get student's info by id
-- id: student's id
-- Response:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": {
-      "id": int,
-      "fullName": str,
-      "email": str,
-      "phone": str
-   }
+  "refreshToken": str
 }
 ```
 
-#### GET /students
-- Get list of students with limit and offset (already have default value)
-- Query params:
-   - `limit` (default=10)
-   - `offset` (default=0)
-- Response:
+Response:
 ```json
 {
-   "success": true,
-   "message": str,
-   "data": [
-      {
-         "id": int,
-         "fullName": str,
-         "email": str,
-         "phone": str
-      },
-      ...
-   ]
+  "accountType": str,
+  "accessToken": str,
+  "refreshToken": str
 }
 ```
 
-#### POST /students
-- Create a student with account and info
-- Request body:
+
+### POST /api/auth/logout
+- This api for removing refresh_token from system
+
+Request:
 ```json
 {
-   "username": str,
-   "password": str,
-   "fullName": str,
-   "email": str,
-   "phone": str
+  "refreshToken": str
 }
 ```
-- Response:
+Response:
 ```json
-{
-   "success": true,
-   "message": str,
-   "data": None
-}
+null
 ```
 
-#### PUT /students/{id}
-- Update student's info
-- id: student's id
-- Request body:
-```json
-{
-   "password": str | None,
-   "fullName": str | None,
-}
-```
-- Response body:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": {
-      "id": int,
-      "fullName": str,
-      "email": str,
-      "phone": str
-   }
-}
-```
-
-#### DELETE /students/{id}
-- Delete a student
-- id: student's id
-- Response:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": None
-}
-```
-
-### Books
-
-#### POST /books/data
-- Create a book with data
-- Request body:
-```json
-{
-   "title": str,
-   "author": str,
-   "category": str,
-   "publisher": str,
-   "yearPublished": int,
-   "availableCopies": int,
-   "description": str,
-   "rating": float,
-   "numberOfRatings": int,
-   "imageUrl": str
-}
-```
-- Response body:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": {
-      "id": int,
-      "title": str,
-      "author": str,
-      "category": str,
-      "publisher": str,
-      "yearPublished": int,
-      "availableCopies": int,
-      "description": str,
-      "rating": float,
-      "numberOfRatings": int,
-      "imageUrl": str
-   }
-}
-```
-
-#### POST /books/isbn/{isbnCode}
-- Create a book with isbn code
-- isbnCode: book's code from google
-- Response:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": {
-      "id": int,
-      "title": str,
-      "author": str,
-      "category": str,
-      "publisher": str,
-      "yearPublished": int,
-      "availableCopies": int,
-      "description": str,
-      "rating": float,
-      "numberOfRatings": int,
-      "imageUrl": str
-   }
-}
-```
-
-#### GET /books/{id}
-- Get book's info
-- id: book's id
-- Response:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": {
-      "id": int,
-      "title": str,
-      "author": str,
-      "category": str,
-      "publisher": str,
-      "yearPublished": int,
-      "availableCopies": int,
-      "description": str,
-      "rating": float,
-      "numberOfRatings": int,
-      "imageUrl": str
-   }
-}
-```
-
-#### GET /books
-- Get list of books with sorted, limit, offset
-- Query params (all are optional):
-   - `sorted` (example: rating)
-   - `limit` (default=10)
-   - `offset` (default=0)
-- Response:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": [
-      {
-         "id": int,
-         "title": str,
-         "author": str,
-         "category": str,
-         "publisher": str,
-         "yearPublished": int,
-         "availableCopies": int,
-         "description": str,
-         "rating": float,
-         "numberOfRatings": int,
-         "imageUrl": str
-      },
-      ...
-   ]
-}
-```
-
-#### DELETE /books/{id}
-- Delete a book
-- id: book's id
-- Response:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": None
-}
-```
-
-### PUT /books/{id}
-- Update a book
-- id: book's id
-- Request body:
-```json
-{
-   "title": str | None,
-   "author": str | None,
-   "category": str | None,
-   "publisher": str | None,
-   "yearPublished": int | None,
-   "availableCopies": int | None,
-   "description": str | None,
-   "imageUrl": str | None
-}
-```
-- Response:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": [
-      {
-         "id": int,
-         "title": str,
-         "author": str,
-         "category": str,
-         "publisher": str,
-         "yearPublished": int,
-         "availableCopies": int,
-         "description": str,
-         "rating": float,
-         "numberOfRatings": int,
-         "imageUrl": str
-      },
-      ...
-   ]
-}
-```
-
-### Borrow
-
-#### GET /borrows/student/{id}
-- Get list of borrowing's info of a student
--id: student's id
-- Response:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": [
-      {
-         "id": int,
-         "student": {
-            "id": int,
-            "fullName": str
-         },
-         "book": {
-            "id": int,
-            "title": str,
-            "imageUrl": str
-         },
-         "borrowDate": Date,
-         "expectedReturnDate": Date,
-         "status": "Borrowed" | "Returned"
-      },
-      ...
-   ]
-}
-```
-
-#### GET /borrows/{id}
-- Get a borrowing's info
-- id: borrow's id
-- Response:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": {
-      "id": int,
-      "student": {
-         "id": int,
-         "fullName": str
-      },
-      "book": {
-         "id": int,
-         "title": str,
-         "imageUrl": str
-      },
-      "borrowDate": Date,
-      "expectedReturnDate": Date,
-      "status": "Borrowed" | "Returned"
-   }
-}
-```
-
-#### GET /borrows/check
-- Check if student borrowed book
-- Request params:
-   - `studentId`
-   - `bookId`
-- Response:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": {
-      "isBorrowing": bool
-   }
-}
-```
-
-#### POST /borrows
-- Create a borrowing
-- Request body:
-```json
-{
-   "studentId": int,
-   "bookId": int
-}
-```
-- Response:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": {
-      "id": int,
-      "student": {
-         "id": int,
-         "fullName": str
-      },
-      "book": {
-         "id": int,
-         "title": str,
-         "imageUrl": str
-      },
-      "borrowDate": Date,
-      "expectedReturnDate": Date,
-      "status": "Borrowed" | "Returned"
-   }
-}
-```
-
-### Return
-
-#### POST /returns
-- Return book
-- Request body:
-```json
-{
-   "borrowId": int,
-   "returnDate": Date,
-   "damagePercentage": int
-}
-```
-
-- Response:
-```json
-{
-   "success": true,
-   "message": str,
-   "data": {
-      "id": int,
-      "borrow": {
-         "id": int,
-         "student": {
-            "id": int,
-            "fullName": str
-         },
-         "book": {
-            "id": int,
-            "title": str,
-            "imageUrl": str
-         },
-         "borrowDate": Date,
-         "expectedReturnDate": Date,
-         "status": "Borrowed" | "Returned"
-      },
-      "returnDate": Date,
-      "damagePercentage": int
-   }
-}
-```
