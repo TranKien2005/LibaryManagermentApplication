@@ -40,6 +40,11 @@ public class BorrowService {
         return borrows.stream().map(borrowMapper::toBorrowDetailResponse).toList();
     }
 
+    public List<BorrowDetailResponse> init_getAll() {
+        List<Borrow> borrows = borrowRepository.findAll();
+        return borrows.stream().map(borrowMapper::toBorrowDetailResponse).toList();
+    }
+
     public BorrowDetailResponse create(BorrowCreationRequest request) {
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new GeneralException(ResponseCode.BOOK_NOT_FOUND));
@@ -48,6 +53,25 @@ public class BorrowService {
         }
         Student student = studentRepository.findById(request.getStudentId())
                         .orElseThrow(() -> new GeneralException(ResponseCode.STUDENT_NOT_FOUND));
+        book.setAvailableCopies(book.getAvailableCopies() - 1);
+        bookRepository.save(book);
+        Borrow borrow = borrowMapper.toBorrow(request);
+        borrow.setStudent(student);
+        borrow.setBook(Book.builder().id(request.getBookId()).build());
+        borrow.setBorrowDate(LocalDate.now());
+        borrow.setStatus(Borrow.Type.Borrowed);
+        borrow = borrowRepository.save(borrow);
+        return borrowMapper.toBorrowDetailResponse(borrow);
+    }
+
+    public BorrowDetailResponse init_create(BorrowCreationRequest request) {
+        Book book = bookRepository.findById(request.getBookId())
+                .orElseThrow(() -> new GeneralException(ResponseCode.BOOK_NOT_FOUND));
+        if (book.getAvailableCopies() == 0) {
+            throw new GeneralException(ResponseCode.NOT_ENOUGH_BOOK);
+        }
+        Student student = studentRepository.findById(request.getStudentId())
+                .orElseThrow(() -> new GeneralException(ResponseCode.STUDENT_NOT_FOUND));
         book.setAvailableCopies(book.getAvailableCopies() - 1);
         bookRepository.save(book);
         Borrow borrow = borrowMapper.toBorrow(request);

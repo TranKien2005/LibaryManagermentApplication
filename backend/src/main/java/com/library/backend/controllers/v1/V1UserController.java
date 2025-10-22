@@ -55,6 +55,12 @@ public class V1UserController {
         String fullName = (String) request.get("fullName");
         String email = (String) request.get("email");
         String phone = (String) request.get("phone");
+        System.out.println("----------");
+        System.out.println(userId);
+        System.out.println(fullName);
+        System.out.println(email);
+        System.out.println(phone);
+        System.out.println("-------");
         boolean isManager = managerService.existsById(userId);
         if (isManager) {
             throw new GeneralException(ResponseCode.STUDENT_NOT_FOUND);

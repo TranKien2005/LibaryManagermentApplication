@@ -38,11 +38,24 @@ public class BookService {
         return books.stream().map(bookMapper::toBookDetailResponse).toList();
     }
 
+    public List<BookDetailResponse> init_getAll() {
+        List<Book> books = bookRepository.findAll();
+        return books.stream().map(bookMapper::toBookDetailResponse).toList();
+    }
+
     public void delete(Integer id) {
         bookRepository.deleteById(id);
     }
 
     public BookDetailResponse create(BookCreationRequest request) {
+        Book book = bookMapper.toBook(request);
+        book.setRating(0.0);
+        book.setReviewCount(0);
+        book = bookRepository.save(book);
+        return bookMapper.toBookDetailResponse(book);
+    }
+
+    public BookDetailResponse init_create(BookCreationRequest request) {
         Book book = bookMapper.toBook(request);
         book.setRating(0.0);
         book.setReviewCount(0);

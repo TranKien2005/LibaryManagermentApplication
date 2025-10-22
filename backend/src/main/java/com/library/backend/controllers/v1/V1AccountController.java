@@ -230,7 +230,11 @@ public class V1AccountController {
     ResponseEntity<ApiResponse<String>> login(
             @RequestBody Map<String, Object> request
     ) {
-        AuthResponse response = authService.login((String) request.get("username"), (String) request.get("password"));
+        AuthRequest authRequest = AuthRequest.builder()
+                .username((String) request.get("username"))
+                .password((String) request.get("password"))
+                .build();
+        AuthResponse response = authService.login(authRequest);
         return ResponseEntity.ok().body(ApiResponse.success(response.getAccountType()));
     }
 

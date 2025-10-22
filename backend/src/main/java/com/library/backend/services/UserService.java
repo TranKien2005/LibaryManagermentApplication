@@ -13,6 +13,8 @@ import com.library.backend.repositories.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,22 +26,41 @@ public class UserService {
 
     UserRepository userRepository;
     UserMapper userMapper;
+    PasswordEncoder passwordEncoder;
 
+    @PreAuthorize("hasRole('Manager')")
     public List<UserDetailResponse> getAll() {
+        List<User> users = userRepository.findAll();
+        return users.stream().map(userMapper::toUserDetailResponse).toList();
+    }
+
+    public List<UserDetailResponse> init_getAll() {
         List<User> users = userRepository.findAll();
         return users.stream().map(userMapper::toUserDetailResponse).toList();
     }
 
     public UserDetailResponse create(UserCreationRequest request) {
         User user = userMapper.toUser(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user = userRepository.save(user);
         return userMapper.toUserDetailResponse(user);
     }
 
+    public UserDetailResponse init_create(UserCreationRequest request) {
+        User user = userMapper.toUser(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user = userRepository.save(user);
+        return userMapper.toUserDetailResponse(user);
+    }
+
+    @PreAuthorize("#userId == authentication.principal")
     public UserDetailResponse update(Integer id, UserUpdateRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new GeneralException(ResponseCode.USER_NOT_FOUND));
         userMapper.update(user, request);
+        if (request.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
         user = userRepository.save(user);
         return userMapper.toUserDetailResponse(user);
     }
@@ -50,6 +71,7 @@ public class UserService {
         return userMapper.toUserDetailResponse(user);
     }
 
+    @PreAuthorize("hasRole('Manager')")
     public void delete(Integer id) {
         userRepository.deleteById(id);
     }

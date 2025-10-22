@@ -61,27 +61,27 @@ public class InitConfig {
             }
             else {
                 System.out.println("Fetch user");
-                users = userService.getAll();
+                users = userService.init_getAll();
             }
             if (!managerService.isInit()) {
                 System.out.println("Init manager");
                 for (int i = 0; i < 2; i++) {
-                    managers.add(managerService.create(ManagerCreationRequest.builder().userId(users.get(i).getId()).build()));
+                    managers.add(managerService.init_create(ManagerCreationRequest.builder().userId(users.get(i).getId()).build()));
                 }
             }
             else {
                 System.out.println("Fetch manager");
-                managers = managerService.getAll();
+                managers = managerService.init_getAll();
             }
             if (!studentService.isInit()) {
                 System.out.println("Init student");
                 for (int i = 2; i < users.size(); i++) {
-                    students.add(studentService.create(StudentCreationRequest.builder().userId(users.get(i).getId()).build()));
+                    students.add(studentService.init_create(StudentCreationRequest.builder().userId(users.get(i).getId()).build()));
                 }
             }
             else {
                 System.out.println("Fetch student");
-                students = studentService.getAll();
+                students = studentService.init_getAll();
             }
             if (!bookService.isInit()) {
                 System.out.println("Init book");
@@ -138,12 +138,12 @@ public class InitConfig {
                         )
                 );
                 for (BookCreationRequest request:requests) {
-                    books.add(bookService.create(request));
+                    books.add(bookService.init_create(request));
                 }
             }
             else {
                 System.out.println("Fetch book");
-                books = bookService.getAll();
+                books = bookService.init_getAll();
             }
             if (!borrowService.isInit()) {
                 System.out.println("Init borrow");
@@ -201,12 +201,12 @@ public class InitConfig {
                 );
 
                 for (BorrowCreationRequest request : requests) {
-                    borrows.add(borrowService.create(request));
+                    borrows.add(borrowService.init_create(request));
                 }
             }
             else {
                 System.out.println("Fetch borrow");
-                borrows = borrowService.getAll();
+                borrows = borrowService.init_getAll();
             }
             if (!returnService.isInit()) {
                 List<ReturnCreationRequest> returnRequests = List.of(
@@ -232,12 +232,12 @@ public class InitConfig {
                                 .build()
                 );
                 for (ReturnCreationRequest request : returnRequests) {
-                    returns.add(returnService.create(request));
+                    returns.add(returnService.init_create(request));
                 }
             }
             else {
                 System.out.println("Fetch borrow");
-                returns = returnService.getAll();
+                returns = returnService.init_getAll();
             }
         }
     }

@@ -38,6 +38,17 @@ public class ManagerService {
         return response;
     }
 
+    public ManagerDetailResponse init_create(ManagerCreationRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new GeneralException(ResponseCode.USER_NOT_FOUND));
+        Manager manager = new Manager();
+        manager.setUser(user);
+        manager = managerRepository.save(manager);
+        ManagerDetailResponse response = managerMapper.toManagerDetailResponse(manager);
+//        managerMapper.extraMap(response, manager.getUser());
+        return response;
+    }
+
     public ManagerDetailResponse getById(Integer id) {
         Manager manager = managerRepository.findById(id)
                 .orElseThrow(() -> new GeneralException(ResponseCode.MANAGER_NOT_FOUND));
@@ -47,6 +58,11 @@ public class ManagerService {
     public List<Integer> getAllIds() {
         List<Manager> managers = managerRepository.findAll();
         return managers.stream().map(Manager::getUserId).toList();
+    }
+
+    public List<ManagerDetailResponse> init_getAll() {
+        List<Manager> managers = managerRepository.findAll();
+        return managers.stream().map(managerMapper::toManagerDetailResponse).toList();
     }
 
     public List<ManagerDetailResponse> getAll() {

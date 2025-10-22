@@ -13,6 +13,7 @@ import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -35,6 +36,15 @@ public class StudentService {
         return studentMapper.toStudentDetailResponse(student);
     }
 
+    public StudentDetailResponse init_create(StudentCreationRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new GeneralException(ResponseCode.USER_NOT_FOUND));
+        Student student = new Student();
+        student.setUser(user);
+        student = studentRepository.save(student);
+        return studentMapper.toStudentDetailResponse(student);
+    }
+
     public StudentDetailResponse getById(Integer id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new GeneralException(ResponseCode.STUDENT_NOT_FOUND));
@@ -46,7 +56,13 @@ public class StudentService {
         return students.stream().map(Student::getUserId).toList();
     }
 
+    @PreAuthorize("hasRole('Manager')")
     public List<StudentDetailResponse> getAll() {
+        List<Student> students = studentRepository.findAll();
+        return students.stream().map(studentMapper::toStudentDetailResponse).toList();
+    }
+
+    public List<StudentDetailResponse> init_getAll() {
         List<Student> students = studentRepository.findAll();
         return students.stream().map(studentMapper::toStudentDetailResponse).toList();
     }
