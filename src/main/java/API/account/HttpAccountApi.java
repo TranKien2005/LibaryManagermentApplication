@@ -2,6 +2,8 @@ package API.account;
 
 import API.BaseHttpApi;
 import model.Account;
+import model.AuthResponse;
+import service.auth.AuthContext;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -60,7 +62,16 @@ public class HttpAccountApi extends BaseHttpApi<Account, Integer> implements Acc
             "username", username,
             "password", password
         );
-        return client.postAsync(baseUrl + resourcePath + "/login", payload, String.class);
+        // Backend exposes token-based login at /api/auth/login which returns an AuthResponse
+        // Call that endpoint, save access/refresh tokens into AuthContext and return accessToken
+        return client.postAsync(baseUrl + "/api/auth/login", payload, AuthResponse.class)
+                .thenApply(authResp -> {
+                    if (authResp != null) {
+                        AuthContext.getInstance().setTokens(authResp.getAccessToken(), authResp.getRefreshToken(), authResp.getAccountType());
+                        return authResp.getAccessToken();
+                    }
+                    return null;
+                });
     }
 
     @Override

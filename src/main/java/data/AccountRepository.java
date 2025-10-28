@@ -11,4 +11,7 @@ public interface AccountRepository extends BaseRepository<Account, Integer> {
     CompletableFuture<Integer> add(Account account);
     
     CompletableFuture<Void> updatePassword(int accountId, String newPassword);
+    
+    // Perform login via backend auth endpoint. Returns access token string.
+    CompletableFuture<String> login(String username, String password);
 }

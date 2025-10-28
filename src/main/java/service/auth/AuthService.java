@@ -15,17 +15,14 @@ public class AuthService {
     }
 
     public CompletableFuture<Account> authenticate(String username, String password) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                Account account = accountRepository.findByUsername(username).join();
-                if (account != null && account.getPassword().equals(password)) {
-                    return account;
-                }
-                return null;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
+        // New flow: perform API login which will set tokens in AuthContext via HttpAccountApi,
+        // then fetch account details using protected endpoint (token will be attached automatically).
+        return accountRepository.login(username, password)
+                .thenCompose(token -> accountRepository.findByUsername(username))
+                .exceptionally(ex -> {
+                    // unwrap ApiException or other causes
+                    throw new RuntimeException(ex.getCause() != null ? ex.getCause() : ex);
+                });
     }
 
     public CompletableFuture<Account> authenticateByAccountId(int accountId) {
