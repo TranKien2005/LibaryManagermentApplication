@@ -1,51 +1,59 @@
+# server:
+#   port: ${BACKEND_PORT}
+#   servlet:
+#     context-path: /api
+
+# spring:
+#   datasource:
+#     url: ${SPRING_DATASOURCE_URL}
+#     username: ${SPRING_DATASOURCE_USERNAME}
+#     password: ${SPRING_DATASOURCE_PASSWORD}
+#   jpa:
+#     hibernate:
+#       ddl-auto: update
+#     show-sql: true
+#     properties:
+#       hibernate:
+#         format_sql: true
+# jwt:
+#   signerKey: ${JWT_KEY}
+#   accessToken:
+#     expirationTime: 1800
+#   refreshToken:
+#     expirationTime: 604800
+
+
+# app:
+#   cors:
+#     allowed-origins: "*"
+
+
+app:
+ cors:
+   allowed-origins: "*"
 server:
-  port: ${BACKEND_PORT}
-  servlet:
-    context-path: /api
+ port: 8080
+ servlet:
+   context-path: /api
 
 spring:
-  datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+ datasource:
+   url: jdbc:mysql://localhost:3306/librarymanagement
+   username: root
+   password: 123456
+ jpa:
+   hibernate:
+     ddl-auto: update
+   show-sql: true
+   properties:
+     hibernate:
+       format_sql: true
 jwt:
-  signerKey: ${JWT_KEY}
+  # NOTE: HS512 requires a strong secret (recommended >= 64 bytes).
+  # This value is a 128-hex-char string (64 bytes) used for HMAC signing.
+  signerKey: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
   accessToken:
     expirationTime: 1800
   refreshToken:
     expirationTime: 604800
-
-
-app:
-  cors:
-    allowed-origins: "*"
-
-
-#app:
-#  cors:
-#    allowed-origins: "*"
-#server:
-#  port: 8080
-#  servlet:
-#    context-path: /api
-#
-#spring:
-#  datasource:
-#    url: jdbc:mysql://localhost:3306/librarymanagement
-#    username: root
-#    password: 123456
-#  jpa:
-#    hibernate:
-#      ddl-auto: update
-#    show-sql: true
-#    properties:
-#      hibernate:
-#        format_sql: true
 

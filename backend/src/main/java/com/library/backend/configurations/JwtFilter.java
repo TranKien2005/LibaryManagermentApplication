@@ -68,11 +68,14 @@ public class JwtFilter extends OncePerRequestFilter {
                 catch (NumberFormatException exception) {
                     throw new BadCredentialsException("Invalid JWT token");
                 }
-                String scope = jwtClaimsSet.getClaim("scope").toString();
-                List<String> roles = List.of(scope.replace("ROLE_", "").split(" "));
-                List<SimpleGrantedAuthority> authorities = roles.stream()
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+        String scope = jwtClaimsSet.getClaim("scope").toString();
+        // scope already contains authority names like "ROLE_Manager". Keep the full
+        // authority string so Spring's hasRole('Manager') checks (which look for
+        // "ROLE_Manager") will succeed.
+        List<String> roles = List.of(scope.split(" "));
+        List<SimpleGrantedAuthority> authorities = roles.stream()
+            .map(SimpleGrantedAuthority::new)
+            .collect(Collectors.toList());
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userId, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }

@@ -53,6 +53,11 @@ public class AccountRepositoryAdapter implements AccountRepository {
     }
 
     @Override
+    public CompletableFuture<String> login(String username, String password) {
+        return accountApi.login(username, password);
+    }
+
+    @Override
     public boolean isUsernameExists(String username) {
         return accountApi.isUsernameExists(username).join();
     }

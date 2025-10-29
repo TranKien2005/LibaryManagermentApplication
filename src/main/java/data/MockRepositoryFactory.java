@@ -94,6 +94,17 @@ public class MockRepositoryFactory {
                 }
                 return CompletableFuture.completedFuture(null);
             }
+
+            @Override
+            public CompletableFuture<String> login(String username, String password) {
+                Account acc = accounts.values().stream()
+                        .filter(a -> a.getUsername().equals(username))
+                        .findFirst().orElse(null);
+                if (acc != null && acc.getPassword().equals(password)) {
+                    return CompletableFuture.completedFuture("mock-token");
+                }
+                return CompletableFuture.completedFuture(null);
+            }
         };
     }
 
