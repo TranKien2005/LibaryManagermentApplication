@@ -26,7 +26,9 @@ public class SecurityConfig {
 
     static String[] PUBLIC_POST_ENDPOINTS = {
             "/users",
-            "/auth/**"
+            "/accounts",
+            "/auth/**",
+            "/accounts/get-id"
     };
 
     JwtFilter jwtFilter;

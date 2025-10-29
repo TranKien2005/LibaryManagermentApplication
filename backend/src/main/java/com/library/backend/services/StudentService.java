@@ -14,6 +14,7 @@ import lombok.Generated;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class StudentService {
     StudentRepository studentRepository;
     StudentMapper studentMapper;
     UserRepository userRepository;
+    PasswordEncoder passwordEncoder;
 
     public StudentDetailResponse create(StudentCreationRequest request) {
         User user = userRepository.findById(request.getUserId())
@@ -68,8 +70,12 @@ public class StudentService {
     }
 
     public StudentDetailResponse getByUsernameAndPassword(String username, String password) {
-        Student student = studentRepository.findByUserUsernameAndUserPassword(username, password)
+        Student student = studentRepository.findByUserUsername(username)
                 .orElseThrow(() -> new GeneralException(ResponseCode.STUDENT_NOT_FOUND));
+        boolean validate = passwordEncoder.matches(password, student.getUser().getPassword());
+        if (!validate) {
+            throw new GeneralException(ResponseCode.UNAUTHENTICATE);
+        }
         return studentMapper.toStudentDetailResponse(student);
     }
 

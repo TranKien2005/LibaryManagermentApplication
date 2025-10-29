@@ -15,6 +15,10 @@ public class Manager {
 
     public Manager(String fullName2, String email2, String phone2, int accountId2) {
         //TODO Auto-generated constructor stub
+        this.accountID = accountId2;
+        this.email = email2;
+        this.phone = phone2;
+        this.fullName = fullName2;
     }
 
     // Getters and setters

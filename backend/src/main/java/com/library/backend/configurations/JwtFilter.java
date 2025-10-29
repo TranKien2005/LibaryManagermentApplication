@@ -35,15 +35,19 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if ("GET".equalsIgnoreCase(method)) {
             for (String endpoint : SecurityConfig.PUBLIC_GET_ENDPOINTS) {
-                String regex = endpoint.replace("/**", "(/.*)?");
-                if (Pattern.matches(regex, path)) return true;
+                String regex = endpoint
+                        .replace("**", ".*")        // match mọi cấp
+                        .replace("*", "[^/]+");     // match 1 cấp
+                if (Pattern.matches("^" + regex + "$", path)) return true;
             }
         }
 
         if ("POST".equalsIgnoreCase(method)) {
             for (String endpoint : SecurityConfig.PUBLIC_POST_ENDPOINTS) {
-                String regex = endpoint.replace("/**", "(/.*)?");
-                if (Pattern.matches(regex, path)) return true;
+                String regex = endpoint
+                        .replace("**", ".*")
+                        .replace("*", "[^/]+");
+                if (Pattern.matches("^" + regex + "$", path)) return true;
             }
         }
 

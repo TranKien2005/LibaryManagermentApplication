@@ -29,17 +29,21 @@ public class RegisterService {
                     throw new IllegalArgumentException("Passwords do not match.");
                 }
 
-                if (accountRepository.isUsernameExists(username)) {
-                    throw new IllegalArgumentException("Username already exists.");
-                }
+//                if (accountRepository.isUsernameExists(username)) {
+//                    throw new IllegalArgumentException("Username already exists.");
+//                }
 
                 Account newAccount = new Account(username, password, accountType);
                 accountRepository.insert(newAccount).join();
+                System.out.println("1");
+                System.out.println(newAccount.getAccountType());
                 int accountId = accountRepository.getID(newAccount).join();
+                System.out.println("2");
 
                 if ("user".equalsIgnoreCase(accountType)) {
                     User newUser = new User(fullName, email, phone, accountId);
                     userRepository.insert(newUser).join();
+                    System.out.println("3");
                 } else if ("manager".equalsIgnoreCase(accountType)) {
                     Manager newManager = new Manager(fullName, email, phone, accountId);
                     managerRepository.insert(newManager).join();

@@ -65,6 +65,17 @@ public class UserService {
         return userMapper.toUserDetailResponse(user);
     }
 
+    public UserDetailResponse insert_update(Integer id, UserUpdateRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new GeneralException(ResponseCode.USER_NOT_FOUND));
+        userMapper.update(user, request);
+        if (request.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        user = userRepository.save(user);
+        return userMapper.toUserDetailResponse(user);
+    }
+
     public UserDetailResponse getByUsername(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new GeneralException(ResponseCode.USER_NOT_FOUND));

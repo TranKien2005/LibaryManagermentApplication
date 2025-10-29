@@ -1,5 +1,7 @@
 package com.library.backend.controllers.v1;
 
+import com.library.backend.dtos.requests.StudentCreationRequest;
+import com.library.backend.dtos.requests.UserCreationRequest;
 import com.library.backend.dtos.requests.UserUpdateRequest;
 import com.library.backend.dtos.responses.ApiResponse;
 import com.library.backend.dtos.responses.ManagerDetailResponse;
@@ -62,6 +64,7 @@ public class V1UserController {
         System.out.println(phone);
         System.out.println("-------");
         boolean isManager = managerService.existsById(userId);
+        System.out.println(isManager);
         if (isManager) {
             throw new GeneralException(ResponseCode.STUDENT_NOT_FOUND);
         }
@@ -70,7 +73,7 @@ public class V1UserController {
                 .email(email)
                 .phone(phone)
                 .build();
-        userService.update(userId, userUpdateRequest);
+        userService.insert_update(userId, userUpdateRequest);
         return ResponseEntity.ok().body(ApiResponse.success(null));
     }
 
