@@ -32,11 +32,13 @@ public class SecurityConfig {
     };
 
     JwtFilter jwtFilter;
+    ThrottlingFilter throttlingFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.exceptionHandling(exception -> exception.authenticationEntryPoint(new JwtAuthenticationEntryPoint()))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(throttlingFilter, JwtFilter.class)
                 .authorizeHttpRequests(
                         request -> request
                                 .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()

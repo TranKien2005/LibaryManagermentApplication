@@ -14,6 +14,13 @@ services:
       - sa-pgdata:/var/lib/postgresql/data
     restart: unless-stopped
 
+  redis:
+    image: redis:8.2.2
+    container_name: sa-library-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
   backend:
     build:
       context: .
@@ -25,10 +32,13 @@ services:
       - "${BACKEND_PORT_OUTSIDE}:${BACKEND_PORT}"
     depends_on:
       - postgres
+      - redis
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_REDIS_HOST: ${SPRING_REDIS_HOST}
+      SPRING_REDIS_PORT: ${SPRING_REDIS_PORT}
     restart: unless-stopped
 
 volumes:

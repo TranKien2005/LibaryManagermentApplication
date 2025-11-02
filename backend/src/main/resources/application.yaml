@@ -1,31 +1,43 @@
- server:
-   port: ${BACKEND_PORT}
-   servlet:
-     context-path: /api
+server:
+  port: ${BACKEND_PORT}
+  servlet:
+    context-path: /api
 
- spring:
-   datasource:
-     url: ${SPRING_DATASOURCE_URL}
-     username: ${SPRING_DATASOURCE_USERNAME}
-     password: ${SPRING_DATASOURCE_PASSWORD}
-   jpa:
-     hibernate:
-       ddl-auto: update
-     show-sql: true
-     properties:
-       hibernate:
-         format_sql: true
- jwt:
-   signerKey: ${JWT_KEY}
-   accessToken:
-     expirationTime: 1800
-   refreshToken:
-     expirationTime: 604800
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  redis:
+    host: ${SPRING_REDIS_HOST}
+    port: ${SPRING_REDIS_PORT}
+throttling:
+  limit: 10
+  duration: 10
+  base-delay: 200
+jwt:
+  signerKey: ${JWT_KEY}
+  accessToken:
+    expirationTime: 1800
+  refreshToken:
+    expirationTime: 604800
+# redisson:
+#   singleServerConfig:
+#     address: "redis://${SPRING_REDIS_HOST}:${SPRING_REDIS_PORT}"
+#     connectionMinimumIdleSize: 2
+#     connectionPoolSize: 10
 
 
- app:
-   cors:
-     allowed-origins: "*"
+app:
+ cors:
+   allowed-origins: "*"
 
 
 #app:
