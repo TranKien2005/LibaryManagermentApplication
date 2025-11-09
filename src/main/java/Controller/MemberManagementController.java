@@ -77,8 +77,8 @@ public class MemberManagementController {
                     tfFullname.setText(newValue.getFullName());
                     tfEmail.setText(newValue.getEmail());
                     tfPhone.setText(newValue.getPhone());
-                } catch (SQLException e) {
-                    util.ErrorDialog.showError("Database Error", e.getMessage(),
+                } catch (Exception e) {
+                    util.ErrorDialog.showError("Error", e.getMessage(),
                             (Stage) rootVBox.getScene().getWindow());
                 }
             }
@@ -102,9 +102,7 @@ public class MemberManagementController {
                 userList.clear();
                 userList.addAll(users);
             });
-        } catch (SQLException e) {
-            Platform.runLater(() -> util.ErrorDialog.showError("Database Error", e.getMessage(),
-                    (Stage) rootVBox.getScene().getWindow()));
+ 
         } catch (Exception e) {
             Platform.runLater(
                     () -> util.ErrorDialog.showError("Error", e.getMessage(), (Stage) rootVBox.getScene().getWindow()));
@@ -154,9 +152,6 @@ public class MemberManagementController {
             memberManagementService.updateUser(selectedUser, pfPassword.getText());
             util.ErrorDialog.showSuccess("Update Successful", "User details have been successfully updated.",
                     (Stage) rootVBox.getScene().getWindow());
-        } catch (SQLException e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Database Error", e.getMessage(), (Stage) rootVBox.getScene().getWindow());
         } catch (Exception e) {
             e.printStackTrace();
             util.ErrorDialog.showError("Error", e.getMessage(), (Stage) rootVBox.getScene().getWindow());
@@ -186,8 +181,6 @@ public class MemberManagementController {
     private void refreshTableView() {
         try {
             userList.setAll(memberManagementService.getUsers());
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Database Error", e.getMessage(), (Stage) rootVBox.getScene().getWindow());
         } catch (Exception e) {
             util.ErrorDialog.showError("Error", e.getMessage(), (Stage) rootVBox.getScene().getWindow());
         }
@@ -224,10 +217,6 @@ public class MemberManagementController {
                             userList.remove(selectedUser);
                             refreshTableView();
                         });
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                        Platform.runLater(() -> util.ErrorDialog.showError("Database Error", e.getMessage(),
-                                (Stage) rootVBox.getScene().getWindow()));
                     } catch (Exception e) {
                         e.printStackTrace();
                         Platform.runLater(() -> util.ErrorDialog.showError("Error", e.getMessage(),

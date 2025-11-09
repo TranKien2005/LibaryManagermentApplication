@@ -1,17 +1,16 @@
 package DAO;
 
-import java.sql.SQLException;
 import java.util.List;
 
 /**
  * Read-only DAO contract for projection/view DAOs.
  */
 public interface ReadOnlyDao<T, ID> {
-    List<T> getAll() throws SQLException;
+    List<T> getAll() throws Exception;
 
-    T get(ID id) throws SQLException;
+    T get(ID id) throws Exception;
 
-    ID getID(T t) throws SQLException;
+    ID getID(T t) throws Exception;
 
-    List<ID> getAllID() throws SQLException;
+    List<ID> getAllID() throws Exception;
 }

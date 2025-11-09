@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import model.AuthResponse;
 import service.auth.AuthContext;
@@ -35,6 +36,9 @@ public class ApiClient {
     private final HttpClient http;
     private final Gson gson;
     private final Duration timeout = Duration.ofSeconds(10);
+    // client-side rate limiter applied at send time (fixed in ApiClient)
+    private static final double DEFAULT_PERMITS_PER_SECOND = 4.0; // change if you want a different fixed limit
+    private final ApiRateLimiter rateLimiter;
 
     public ApiClient() {
         this.http = HttpClient.newBuilder()
@@ -44,6 +48,8 @@ public class ApiClient {
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
                 .create();
+    // instantiate fixed rate limiter for this client
+    this.rateLimiter = new ApiRateLimiter(DEFAULT_PERMITS_PER_SECOND);
     }
     
     private static class LocalDateAdapter implements JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
@@ -83,8 +89,10 @@ public class ApiClient {
                 .header("Accept", "application/json");
         addAuthHeader(builder);
         HttpRequest req = builder.build();
-        return http.sendAsync(req, BodyHandlers.ofString())
-                .thenCompose(resp -> handleResponseWithPossibleRefresh(resp, url, null, typeOfT, () -> getAsync(url, typeOfT)));
+    Supplier<CompletableFuture<T>> supplier = () -> http.sendAsync(req, BodyHandlers.ofString())
+        .thenCompose(resp -> handleResponseWithPossibleRefresh(resp, url, null, typeOfT, () -> getAsync(url, typeOfT)));
+        if (rateLimiter != null) return rateLimiter.executeAsyncRequestFailFast(supplier);
+    return supplier.get();
     }
 
     public <T> CompletableFuture<T> postAsync(String url, Object body, Class<T> respClass) {
@@ -97,8 +105,10 @@ public class ApiClient {
                 .header("Accept", "application/json");
         addAuthHeader(builder);
         HttpRequest req = builder.build();
-        return http.sendAsync(req, BodyHandlers.ofString())
-                .thenCompose(resp -> handleResponseWithPossibleRefresh(resp, url, json, respClass, () -> postAsync(url, body, respClass)));
+    Supplier<CompletableFuture<T>> supplier = () -> http.sendAsync(req, BodyHandlers.ofString())
+        .thenCompose(resp -> handleResponseWithPossibleRefresh(resp, url, json, respClass, () -> postAsync(url, body, respClass)));
+        if (rateLimiter != null) return rateLimiter.executeAsyncRequestFailFast(supplier);
+    return supplier.get();
     }
 
     public <T> CompletableFuture<T> putAsync(String url, Object body, Class<T> respClass) {
@@ -111,8 +121,10 @@ public class ApiClient {
                 .header("Accept", "application/json");
         addAuthHeader(builder);
         HttpRequest req = builder.build();
-        return http.sendAsync(req, BodyHandlers.ofString())
-                .thenCompose(resp -> handleResponseWithPossibleRefresh(resp, url, json, respClass, () -> putAsync(url, body, respClass)));
+    Supplier<CompletableFuture<T>> supplier = () -> http.sendAsync(req, BodyHandlers.ofString())
+        .thenCompose(resp -> handleResponseWithPossibleRefresh(resp, url, json, respClass, () -> putAsync(url, body, respClass)));
+        if (rateLimiter != null) return rateLimiter.executeAsyncRequestFailFast(supplier);
+    return supplier.get();
     }
 
     public CompletableFuture<Void> deleteAsync(String url) {
@@ -122,9 +134,11 @@ public class ApiClient {
                 .DELETE();
         addAuthHeader(builder);
         HttpRequest req = builder.build();
-        return http.sendAsync(req, BodyHandlers.ofString()).thenCompose(resp ->
-                handleResponseWithPossibleRefresh(resp, url, null, Void.class, () -> deleteAsync(url))
-        ).thenApply(ApiClient::returnNull);
+    Supplier<CompletableFuture<Void>> supplier = () -> http.sendAsync(req, BodyHandlers.ofString())
+        .thenCompose(resp -> handleResponseWithPossibleRefresh(resp, url, null, Void.class, () -> deleteAsync(url)))
+        .thenApply(ApiClient::returnNull);
+        if (rateLimiter != null) return rateLimiter.executeAsyncRequestFailFast(supplier);
+    return supplier.get();
     }
 
     // attach Authorization header when access token exists

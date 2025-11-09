@@ -69,9 +69,6 @@ public class menuUserController {
         try {
             bookList = menuUserService.getAllBooks();
             borrowReturnList = menuUserService.getBorrowReturnList(accountID);
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Database Error", e.getMessage(), null);
-            e.printStackTrace();
         } catch (Exception e) {
             util.ErrorDialog.showError("Error", e.getMessage(), null);
             e.printStackTrace();
@@ -161,9 +158,6 @@ public class menuUserController {
 
             }
             resetList();
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Database Error", e.getMessage(), null);
-            e.printStackTrace();
         } catch (Exception e) {
             util.ErrorDialog.showError("Error", e.getMessage(), null);
             e.printStackTrace();
@@ -243,67 +237,71 @@ public class menuUserController {
 
     @FXML
     private void showHomeTab() {
-        stackPane.getChildren().forEach(node -> node.setVisible(false));
-        stackPane.getChildren().get(1).setVisible(true);
-        homeController.undoDetail();
+        try {
+            stackPane.getChildren().forEach(node -> node.setVisible(false));
+            stackPane.getChildren().get(1).setVisible(true);
+            homeController.undoDetail();
+        } catch (Exception e) {
+            e.printStackTrace();
+            util.ErrorDialog.showError("Lỗi", e.getMessage() != null ? e.getMessage() : e.toString(), null);
+        }
     }
 
     @FXML
     private void showBorrowReturnTab() {
-        stackPane.getChildren().forEach(node -> node.setVisible(false));
-        borrowAndReturnTab.setVisible(true);
+        try {
+            stackPane.getChildren().forEach(node -> node.setVisible(false));
+            borrowAndReturnTab.setVisible(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            util.ErrorDialog.showError("Lỗi", e.getMessage() != null ? e.getMessage() : e.toString(), null);
+        }
     }
 
     @FXML
     private void showMyAccountTab() {
-        stackPane.getChildren().forEach(node -> node.setVisible(false));
-        stackPane.getChildren().get(2).setVisible(true);
-        myAccountController.initialize();
+        try {
+            stackPane.getChildren().forEach(node -> node.setVisible(false));
+            stackPane.getChildren().get(2).setVisible(true);
+            myAccountController.initialize();
+        } catch (Exception e) {
+            e.printStackTrace();
+            util.ErrorDialog.showError("Lỗi", e.getMessage() != null ? e.getMessage() : e.toString(), null);
+        }
     }
 
     @FXML
     private void handleReload() {
-
         try {
-            resetList();
-            homeController.reload();
-            myAccountController.initialize();
-            loadBorrowedDocuments();
-
-            cbDocuments.getItems().clear();
-
-            cbDocuments.getEditor().clear();
-            Account account = menuUserService.getAccount(accountID);
-            if (account != null) {
-                if (account.getAccountType().equals("User")) {
-                    User currentUser = menuUserService.getUser(accountID);
-                    if (currentUser != null) {
-                        userName.setText("User: " + currentUser.getFullName());
-                        cbMembers.setText(currentUser.getAccountID() + " - " + currentUser.getFullName());
-                    }
-                } else {
-                    Manager currentUser = menuUserService.getManager(accountID);
-                    if (currentUser != null) {
-                        userName.setText("Manager: " + currentUser.getFullName());
-                        cbMembers.setText(currentUser.getAccountID() + " - " + currentUser.getFullName());
-                    }
-                }
+            Stage stage = (Stage) borrowAndReturnTab.getScene().getWindow();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/login.fxml"));
+            if (loader.getLocation() == null) {
+                System.err.println("Error: FXML file not found!");
+                return;
             }
-            if (bookList != null) {
-                cbDocuments.getItems().addAll(bookList.stream()
-                        .map(document -> document.getBookID() + " - " + document.getTitle())
-                        .collect(Collectors.toList()));
-            }
-            dpBorrowDate.setValue(LocalDate.now());
+            Scene scene = new Scene(loader.load());
+            stage.setTitle("Đăng nhập");
+            stage.setScene(scene);
+            stage.setWidth(1000);
+            stage.setHeight(600);
+            stage.setResizable(false);
+            stage.getScene().getRoot().setStyle("-fx-border-color: black; -fx-border-width: 2px;");
+            stage.centerOnScreen();
 
-            dpReturnDate.getEditor().clear();
-        } catch (SQLException e) {
-            util.ErrorDialog.showError("Database Error", e.getMessage(), null);
+            // Sử dụng đường dẫn tuyệt đối cho tệp hình ảnh
+            Image icon = new Image(getClass().getResourceAsStream("/images/login/logo.png"));
+            if (icon.isError()) {
+                System.err.println("Error: Image file not found!");
+                return;
+            }
+            stage.getIcons().add(icon);
+
+            stage.show();
+        } catch (IOException e) {
             e.printStackTrace();
-        } catch (Exception e) {
-            util.ErrorDialog.showError("Error", e.getMessage(), null);
-            e.printStackTrace();
+            util.ErrorDialog.showError("Lỗi", e.getMessage() != null ? e.getMessage() : e.toString(), null);
         }
+        
 
     }
 
@@ -364,9 +362,6 @@ public class menuUserController {
                     (Stage) cbDocuments.getScene().getWindow());
 
             
-        } catch (SQLException e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Database Error", e.getMessage(), (Stage) cbDocuments.getScene().getWindow());
         } catch (NumberFormatException e) {
             e.printStackTrace();
             util.ErrorDialog.showError("Error", e.getMessage(), (Stage) cbDocuments.getScene().getWindow());
@@ -392,11 +387,7 @@ public class menuUserController {
             util.ErrorDialog.showSuccess("Thành công", "Tài liệu đã được trả thành công.",
                     (Stage) tvBorrowedDocuments.getScene().getWindow());
             handleReload();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            util.ErrorDialog.showError("Database Error", e.getMessage(),
-                    (Stage) tvBorrowedDocuments.getScene().getWindow());
-            e.printStackTrace();
+        
         } catch (Exception e) {
             e.printStackTrace();
             util.ErrorDialog.showError("Error", e.getMessage(), (Stage) tvBorrowedDocuments.getScene().getWindow());
@@ -527,7 +518,7 @@ public class menuUserController {
                     ErrorDialog.showError("QR Code Error", "Invalid account ID", null);
                     e.printStackTrace();
                     ishandlingQR = false;
-                } catch (RuntimeException | SQLException e) {
+                } catch (Exception e) {
                     ErrorDialog.showError("QR Code Error", e.getMessage(), null);
                     e.printStackTrace();
                     ishandlingQR = false;

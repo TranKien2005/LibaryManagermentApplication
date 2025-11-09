@@ -18,20 +18,20 @@ public class MemberManagementService {
         this.accountRepository = accountRepository;
     }
 
-    public List<User> getUsers() throws SQLException {
+    public List<User> getUsers() {
         return userRepository.getAll().join();
     }
 
-    public Account getAccount(int accountId) throws SQLException {
+    public Account getAccount(int accountId) {
         return accountRepository.get(accountId).join();
     }
 
-    public void updateUser(User user, String newPassword) throws SQLException {
+    public void updateUser(User user, String newPassword) {
         userRepository.update(user, user.getAccountID());
         accountRepository.updatePassword(user.getAccountID(), newPassword);
     }
 
-    public void deleteUser(User user) throws SQLException {
+    public void deleteUser(User user) {
         userRepository.delete(user.getAccountID());
     }
 }

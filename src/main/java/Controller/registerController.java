@@ -47,64 +47,69 @@ public class registerController {
 
     @FXML
     protected void handleRegister() {
-        String username = usernameField.getText();
+        try {
+            String username = usernameField.getText();
 
-        String password = passwordField.getText();
-        String confirmPassword = confirmPasswordField.getText();
-        String fullName = fullnameField.getText();
+            String password = passwordField.getText();
+            String confirmPassword = confirmPasswordField.getText();
+            String fullName = fullnameField.getText();
 
-        String email = emailField.getText();
-        String phone = phoneField.getText();
-        String accountType = accountTypeComboBox.getValue();
+            String email = emailField.getText();
+            String phone = phoneField.getText();
+            String accountType = accountTypeComboBox.getValue();
 
-        Stage window = (Stage) registerButton.getScene().getWindow();
+            Stage window = (Stage) registerButton.getScene().getWindow();
 
-        if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || email.isEmpty() || phone.isEmpty()
-                || accountType == null) {
-            util.ErrorDialog.showError("Registration Failed", "All fields must be filled out.", window);
-            return;
+            if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || email.isEmpty() || phone.isEmpty()
+                    || accountType == null) {
+                util.ErrorDialog.showError("Registration Failed", "All fields must be filled out.", window);
+                return;
+            }
+
+            if (!password.equals(confirmPassword)) {
+                util.ErrorDialog.showError("Registration Failed", "Passwords do not match.", window);
+                return;
+            }
+
+            if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+                util.ErrorDialog.showError("Registration Failed", "Invalid email format.", window);
+                return;
+            }
+
+            // Delegate whole registration flow to service (UI only handles dialogs / navigation)
+            registerService.registerNewAccount(username, password, confirmPassword, accountType, fullName, email, phone)
+                    .thenAccept(new java.util.function.Consumer<model.Account>() {
+                        @Override
+                        public void accept(model.Account createdAccount) {
+                            Platform.runLater(() -> {
+                                util.ErrorDialog.showSuccess("Registration Successful", "Account created successfully. You can now log in.", window);
+                                try {
+                                    FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/login.fxml"));
+                                    Parent loginRoot = loader.load();
+                                    Stage stage = window;
+                                    stage.setTitle("Đăng nhập");
+                                    stage.getScene().setRoot(loginRoot);
+                                    stage.setWidth(1000);
+                                    stage.setHeight(600);
+                                    stage.centerOnScreen();
+                                    stage.setMaximized(false);
+                                    stage.setResizable(false);
+                                    stage.show();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    util.ErrorDialog.showError("Lỗi không xác định", e.getMessage(), window);
+                                }
+                            });
+                        }
+                    }).exceptionally(ex -> {
+                        Platform.runLater(() -> util.ErrorDialog.showError("Registration Failed", ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage(), window));
+                        ex.printStackTrace();
+                        return null;
+                    });
+        } catch (Exception e) {
+            e.printStackTrace();
+            util.ErrorDialog.showError("Lỗi", e.getMessage() != null ? e.getMessage() : e.toString(), null);
         }
-
-        if (!password.equals(confirmPassword)) {
-            util.ErrorDialog.showError("Registration Failed", "Passwords do not match.", window);
-            return;
-        }
-
-        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            util.ErrorDialog.showError("Registration Failed", "Invalid email format.", window);
-            return;
-        }
-
-        // Delegate whole registration flow to service (UI only handles dialogs / navigation)
-        registerService.registerNewAccount(username, password, confirmPassword, accountType, fullName, email, phone)
-                .thenAccept(new java.util.function.Consumer<model.Account>() {
-                    @Override
-                    public void accept(model.Account createdAccount) {
-                        Platform.runLater(() -> {
-                            util.ErrorDialog.showSuccess("Registration Successful", "Account created successfully. You can now log in.", window);
-                            try {
-                                FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/login.fxml"));
-                                Parent loginRoot = loader.load();
-                                Stage stage = window;
-                                stage.setTitle("Đăng nhập");
-                                stage.getScene().setRoot(loginRoot);
-                                stage.setWidth(1000);
-                                stage.setHeight(600);
-                                stage.centerOnScreen();
-                                stage.setMaximized(false);
-                                stage.setResizable(false);
-                                stage.show();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                                util.ErrorDialog.showError("Lỗi không xác định", e.getMessage(), window);
-                            }
-                        });
-                    }
-                }).exceptionally(ex -> {
-                    Platform.runLater(() -> util.ErrorDialog.showError("Registration Failed", ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage(), window));
-                    ex.printStackTrace();
-                    return null;
-                });
     }
 
     @FXML
