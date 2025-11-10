@@ -2,7 +2,6 @@ package com.library.backend.mappers;
 
 import com.library.backend.dtos.requests.BookCreationRequest;
 import com.library.backend.dtos.requests.BookUpdateRequest;
-import com.library.backend.dtos.requests.v1.Document;
 import com.library.backend.dtos.responses.BookDetailResponse;
 import com.library.backend.entities.Book;
 import org.mapstruct.*;

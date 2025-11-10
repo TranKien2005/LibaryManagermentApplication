@@ -19,9 +19,9 @@ spring:
     host: ${SPRING_REDIS_HOST}
     port: ${SPRING_REDIS_PORT}
 throttling:
-  limit: 10
+  limit: 100
   duration: 10
-  base-delay: 200
+  base-delay: 100
 jwt:
   signerKey: ${JWT_KEY}
   accessToken:

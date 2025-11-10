@@ -7,7 +7,12 @@ import lombok.experimental.FieldDefaults;
 import java.net.IDN;
 
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        indexes = {
+                @Index(name = "idx_user_username", columnList = "username")
+        }
+)
 @Data
 @Builder
 @AllArgsConstructor
