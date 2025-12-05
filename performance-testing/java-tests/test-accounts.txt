@@ -1,0 +1,16 @@
+# Test Accounts for Performance Testing
+# Created: 2025-12-05T16:00:37.461206900
+# Total: 10 successful accounts
+#
+# Format: username,password
+
+perftest1,Manager@123
+perftest2,Manager@123
+perftest3,Manager@123
+perftest4,Manager@123
+perftest5,Manager@123
+perftest6,Manager@123
+perftest7,Manager@123
+perftest8,Manager@123
+perftest9,Manager@123
+perftest10,Manager@123
