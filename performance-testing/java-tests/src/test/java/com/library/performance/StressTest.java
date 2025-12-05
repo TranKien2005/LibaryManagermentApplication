@@ -21,12 +21,12 @@ public class StressTest {
     private static final String BASE_URL = "http://localhost:8080/api";
     private static final String TEST_ENDPOINT = "/books"; // Endpoint để stress test
     private static final int REQUESTS_PER_USER = 10; // Mỗi user gửi 10 requests
-    private static final int[] USER_LEVELS = {1, 5, 10, 20, 50, 100, 200, 500};
+    private static final int[] USER_LEVELS = {1, 5, 10, 20, 50, 100, 200};
     
     // Test accounts (đã tạo sẵn bằng SetupTestAccounts)
     private static final String USERNAME_PREFIX = "perftest";
     private static final String PASSWORD = "Manager@123";
-    private static final int TOTAL_TEST_ACCOUNTS = 500;
+    private static final int TOTAL_TEST_ACCOUNTS = 200;
     
     // Pool of tokens cho nhiều users
     private static final List<String> TOKEN_POOL = new ArrayList<>();
@@ -77,8 +77,11 @@ public class StressTest {
                 break;
             }
             
-            // Cool down between tests
-            Thread.sleep(2000);
+            // Cool down between tests (chờ 10 giây trước khi lên level tiếp theo)
+            if (userLevel != USER_LEVELS[USER_LEVELS.length - 1]) { // Không chờ sau level cuối
+                System.out.println("   ⏳ Waiting 10 seconds before next level...\n");
+                Thread.sleep(10000);
+            }
         }
 
         System.out.println("\n" + "=".repeat(70));
@@ -107,7 +110,16 @@ public class StressTest {
                     
                     try (CloseableHttpResponse response = httpClient.execute(request)) {
                         long duration = (System.nanoTime() - start) / 1_000_000;
-                        return new RequestMetric(true, response.getCode(), duration);
+                        int statusCode = response.getCode();
+                        
+                        // Đọc response body để kiểm tra success field
+                        String responseBody = EntityUtils.toString(response.getEntity());
+                        boolean hasSuccess = responseBody.contains("\"success\":true") || responseBody.contains("\"success\": true");
+                        
+                        // Chỉ coi là success nếu status 200 VÀ có success=true trong body
+                        boolean isSuccess = (statusCode == 200) && hasSuccess;
+                        
+                        return new RequestMetric(isSuccess, statusCode, duration);
                     }
                 } catch (Exception e) {
                     long duration = (System.nanoTime() - start) / 1_000_000;
@@ -206,43 +218,75 @@ public class StressTest {
     }
 
     /**
-     * Login nhiều accounts - Concurrent (throttling đã tăng lên 1000 req/10s)
+     * Login nhiều accounts - Theo batch để tránh quá tải
+     * Mỗi batch tối đa 50 accounts, chờ 10 giây giữa các batch
      */
     private static int loginMultipleAccounts(int count) {
-        ExecutorService executor = Executors.newFixedThreadPool(Math.min(count, 50));
-        List<Future<String>> futures = new ArrayList<>();
-        
-        // Login concurrent
-        for (int i = 1; i <= count; i++) {
-            final int accountNum = i;
-            Future<String> future = executor.submit(() -> loginSingleAccount(accountNum));
-            futures.add(future);
-        }
-        
-        // Thu thập tokens
         int successCount = 0;
-        int failCount = 0;
-        for (Future<String> future : futures) {
-            try {
-                String token = future.get();
-                if (token != null) {
-                    TOKEN_POOL.add(token);
-                    successCount++;
-                } else {
-                    failCount++;
+        int batchSize = 50; // Mỗi đợt login tối đa 50 accounts
+        int totalBatches = (int) Math.ceil((double) count / batchSize);
+        
+        System.out.println(String.format("   Login strategy: %d accounts in %d batches (max %d per batch)", 
+            count, totalBatches, batchSize));
+        
+        for (int batch = 0; batch < totalBatches; batch++) {
+            int batchStart = batch * batchSize + 1;
+            int batchEnd = Math.min((batch + 1) * batchSize, count);
+            int currentBatchSize = batchEnd - batchStart + 1;
+            
+            if (totalBatches > 1) {
+                System.out.println(String.format("   📦 Login batch %d/%d: accounts %d to %d (%d accounts)...", 
+                    batch + 1, totalBatches, batchStart, batchEnd, currentBatchSize));
+            }
+            
+            ExecutorService executor = Executors.newFixedThreadPool(20);
+            List<Future<String>> futures = new ArrayList<>();
+            
+            // Login concurrent trong batch này
+            for (int i = batchStart; i <= batchEnd; i++) {
+                final int accountNum = i;
+                Future<String> future = executor.submit(() -> loginSingleAccount(accountNum));
+                futures.add(future);
+            }
+            
+            // Thu thập tokens của batch
+            int batchSuccess = 0;
+            for (Future<String> future : futures) {
+                try {
+                    String token = future.get();
+                    if (token != null) {
+                        TOKEN_POOL.add(token);
+                        batchSuccess++;
+                    }
+                } catch (Exception e) {
+                    // Ignore failed logins
                 }
-            } catch (Exception e) {
-                failCount++;
+            }
+            
+            executor.shutdown();
+            successCount += batchSuccess;
+            
+            if (totalBatches > 1) {
+                System.out.println(String.format("      ✅ Batch %d complete: %d/%d successful", 
+                    batch + 1, batchSuccess, currentBatchSize));
+                
+                // Chờ 10 giây trước khi login batch tiếp theo (trừ batch cuối)
+                if (batch < totalBatches - 1) {
+                    System.out.println("      ⏳ Waiting 10 seconds before next login batch...");
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
             }
         }
         
-        executor.shutdown();
-        
-        // Hiển thị thông tin login nếu có lỗi
-        int failCount2 = count - successCount;
-        if (failCount2 > 0) {
-            System.err.println(String.format("   ⚠️  Login results: %d succeeded, %d failed (%.1f%% success rate)",
-                successCount, failCount2, (successCount * 100.0 / count)));
+        // Hiển thị tổng kết login
+        int failCount = count - successCount;
+        if (failCount > 0) {
+            System.err.println(String.format("   ⚠️  Login summary: %d succeeded, %d failed (%.1f%% success rate)",
+                successCount, failCount, (successCount * 100.0 / count)));
         }
         
         return successCount;

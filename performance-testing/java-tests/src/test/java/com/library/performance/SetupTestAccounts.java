@@ -20,8 +20,10 @@ import java.util.concurrent.*;
 public class SetupTestAccounts {
 
     private static final String BASE_URL = "http://localhost:8080/api";
-    private static final int TOTAL_ACCOUNTS = 500;
-    private static final int CONCURRENT_THREADS = 10;
+    private static final int TOTAL_ACCOUNTS = 200;
+    private static final int ACCOUNTS_PER_BATCH = 20; // Mỗi đợt tạo 20 accounts
+    private static final int BATCH_DELAY_SECONDS = 10; // Chờ 10 giây giữa các đợt
+    private static final int CONCURRENT_THREADS = 20;
     
     // Account manager init sẵn để authenticate
     private static final String ADMIN_USERNAME = "user1";
@@ -35,7 +37,7 @@ public class SetupTestAccounts {
 
     public static void main(String[] args) throws InterruptedException {
         System.out.println("╔══════════════════════════════════════════════════════════╗");
-        System.out.println("║   SETUP TEST ACCOUNTS - Creating 500 Manager Accounts   ║");
+        System.out.println("║   SETUP TEST ACCOUNTS - Creating 200 Manager Accounts   ║");
         System.out.println("╚══════════════════════════════════════════════════════════╝\n");
         System.out.println("Base URL: " + BASE_URL);
         System.out.println("Admin Account: " + ADMIN_USERNAME + " (for authentication)");
@@ -55,45 +57,70 @@ public class SetupTestAccounts {
         System.out.println("✅ Authentication successful!\n");
         
         System.out.println("🚀 Starting account creation...");
+        System.out.println("Strategy: " + ACCOUNTS_PER_BATCH + " accounts per batch, " + BATCH_DELAY_SECONDS + " seconds delay between batches");
         System.out.println("⚠️  Note: Using /accounts/register endpoint (requires auth)\n");
 
-        ExecutorService executor = Executors.newFixedThreadPool(CONCURRENT_THREADS);
-        List<Future<AccountResult>> futures = new ArrayList<>();
-        
+        List<AccountResult> allResults = new ArrayList<>();
         long startTime = System.currentTimeMillis();
+        
+        int totalBatches = (int) Math.ceil((double) TOTAL_ACCOUNTS / ACCOUNTS_PER_BATCH);
 
-        // Tạo accounts
-        for (int i = 1; i <= TOTAL_ACCOUNTS; i++) {
-            final int accountNum = i;
-            Future<AccountResult> future = executor.submit(() -> createAccount(accountNum));
-            futures.add(future);
-        }
-
-        // Thu thập kết quả
-        List<AccountResult> results = new ArrayList<>();
-        int progress = 0;
-        for (Future<AccountResult> future : futures) {
-            try {
-                results.add(future.get());
-                progress++;
-                if (progress % 50 == 0) {
-                    System.out.println(String.format("Progress: %d/%d accounts created...", progress, TOTAL_ACCOUNTS));
+        // Tạo accounts theo từng batch
+        for (int batch = 0; batch < totalBatches; batch++) {
+            int batchStart = batch * ACCOUNTS_PER_BATCH + 1;
+            int batchEnd = Math.min((batch + 1) * ACCOUNTS_PER_BATCH, TOTAL_ACCOUNTS);
+            int batchSize = batchEnd - batchStart + 1;
+            
+            System.out.println(String.format("\n📦 Batch %d/%d: Creating accounts %d to %d (%d accounts)...", 
+                batch + 1, totalBatches, batchStart, batchEnd, batchSize));
+            
+            ExecutorService executor = Executors.newFixedThreadPool(CONCURRENT_THREADS);
+            List<Future<AccountResult>> futures = new ArrayList<>();
+            
+            // Tạo accounts trong batch này
+            for (int i = batchStart; i <= batchEnd; i++) {
+                final int accountNum = i;
+                Future<AccountResult> future = executor.submit(() -> createAccount(accountNum));
+                futures.add(future);
+            }
+            
+            // Thu thập kết quả của batch
+            List<AccountResult> batchResults = new ArrayList<>();
+            for (Future<AccountResult> future : futures) {
+                try {
+                    batchResults.add(future.get());
+                } catch (ExecutionException e) {
+                    System.err.println("Error creating account: " + e.getMessage());
                 }
-            } catch (ExecutionException e) {
-                System.err.println("Error creating account: " + e.getMessage());
+            }
+            
+            executor.shutdown();
+            executor.awaitTermination(1, TimeUnit.MINUTES);
+            
+            allResults.addAll(batchResults);
+            
+            // In kết quả batch
+            long successCount = batchResults.stream().filter(r -> r.success).count();
+            System.out.println(String.format("   ✅ Batch %d complete: %d/%d successful", 
+                batch + 1, successCount, batchSize));
+            
+            // Chờ giữa các batch (trừ batch cuối)
+            if (batch < totalBatches - 1) {
+                System.out.println(String.format("   ⏳ Waiting %d seconds before next batch...", BATCH_DELAY_SECONDS));
+                Thread.sleep(BATCH_DELAY_SECONDS * 1000);
             }
         }
 
         long endTime = System.currentTimeMillis();
         double totalTime = (endTime - startTime) / 1000.0;
 
-        executor.shutdown();
-
         // In kết quả
-        printResults(results, totalTime);
+        printResults(allResults, totalTime);
+        // In kết quả
+        printResults(allResults, totalTime);
         
         // Lưu thông tin accounts vào file
-        saveAccountsToFile(results);
+        saveAccountsToFile(allResults);
     }
     
     private static String loginAsAdmin() {

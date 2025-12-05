@@ -42,17 +42,16 @@ mvn spring-boot:run
 
 # 2. Tạo 500 test accounts (CHỈ CHẠY 1 LẦN ĐẦU TIÊN)
 cd performance-testing/java-tests
-mvn compile exec:java -Dexec.mainClass="com.library.performance.SetupTestAccounts"
+mvn test-compile exec:java "-Dexec.mainClass=com.library.performance.SetupTestAccounts"
 
 # 3. Chạy tests
 # Test nhanh
-mvn compile exec:java -Dexec.mainClass="com.library.performance.SimpleLoadTest"
+mvn test-compile exec:java "-Dexec.mainClass=com.library.performance.SimpleLoadTest"
 
 # Stress test (dùng 500 accounts)
-mvn compile exec:java -Dexec.mainClass="com.library.performance.StressTest"
+mvn test-compile exec:java "-Dexec.mainClass=com.library.performance.StressTest"
 ```
 
-Xem chi tiết trong `java-tests/README.md`
 
 ## Hướng dẫn sử dụng
 
