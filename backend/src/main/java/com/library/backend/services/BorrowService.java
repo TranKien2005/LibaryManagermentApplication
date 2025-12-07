@@ -34,7 +34,7 @@ public class BorrowService {
     StudentRepository studentRepository;
     ReturnRepository returnRepository;
     ReturnMapper returnMapper;
-    MailProducer emailProducer;
+//    MailProducer emailProducer;
 
     public List<BorrowDetailResponse> getAll() {
         List<Borrow> borrows = borrowRepository.findAll();
@@ -66,7 +66,7 @@ public class BorrowService {
         String to = student.getUser().getEmail();
         String subject = "Thông báo mượn sách";
         String content = "Bạn đã mượn sách: " + book.getTitle() + " vào ngày " + borrow.getBorrowDate();
-        emailProducer.sendEmailMessage(to, subject, content);
+//        emailProducer.sendEmailMessage(to, subject, content);
 
         return borrowMapper.toBorrowDetailResponse(borrow);
     }
