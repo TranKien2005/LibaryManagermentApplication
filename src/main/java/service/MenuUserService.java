@@ -41,32 +41,32 @@ public class MenuUserService {
         this.returnRepository = returnRepository;
     }
 
-    public List<Document> getAllBooks() throws SQLException {
+    public List<Document> getAllBooks() {
         return bookRepository.getAll().join();
     }
 
-    public List<BorrowReturn> getBorrowReturnList(int accountId) throws SQLException {
+    public List<BorrowReturn> getBorrowReturnList(int accountId) {
         return borrowReturnRepository.getByAccountId(accountId).join();
     }
 
-    public Account getAccount(int accountId) throws SQLException {
+    public Account getAccount(int accountId) {
         return accountRepository.get(accountId).join();
     }
 
-    public User getUser(int accountId) throws SQLException {
+    public User getUser(int accountId) {
         return userRepository.get(accountId).join();
     }
 
-    public Manager getManager(int accountId) throws SQLException {
+    public Manager getManager(int accountId) {
         return managerRepository.get(accountId).join();
     }
 
-    public void borrowDocument(int memberId, int documentId, LocalDate borrowDate, LocalDate returnDate) throws SQLException {
+    public void borrowDocument(int memberId, int documentId, LocalDate borrowDate, LocalDate returnDate) {
         Borrow newBorrow = new Borrow(memberId, documentId, borrowDate, returnDate, "Borrowed");
         borrowRepository.insert(newBorrow).join();
     }
 
-    public void returnDocument(int borrowId) throws SQLException {
+    public void returnDocument(int borrowId) {
         Borrow selectedBorrow = borrowRepository.get(borrowId).join();
         if (selectedBorrow == null) {
             throw new IllegalArgumentException("Borrow record not found.");
@@ -85,7 +85,7 @@ public class MenuUserService {
         returnRepository.insert(returnRecord).join();
     }
 
-    public Document getBook(int bookId) throws SQLException {
+    public Document getBook(int bookId) {
         return bookRepository.get(bookId).join();
     }
 }

@@ -79,9 +79,14 @@ public class HomeController {
 
     @FXML
     public void initialize() {
-        initialContent = (Parent) scrollPaneMain.getContent();
-        tfSearch.setOnAction(x -> handleSearch());
-        loadInitialContent();
+        try {
+            initialContent = (Parent) scrollPaneMain.getContent();
+            tfSearch.setOnAction(x -> handleSearch());
+            loadInitialContent();
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorDialog.showError("Lỗi", e.getMessage() != null ? e.getMessage() : e.toString(), null);
+        }
     }
 
     private void loadInitialContent() {
@@ -121,7 +126,7 @@ public class HomeController {
             });
 
             loadMoreNewArrivals();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -137,7 +142,7 @@ public class HomeController {
             try {
                 loadMoreSearchResults();
                 scrollPaneMain.setVvalue(0);
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 ErrorDialog.showError("Lỗi", "Không thể tải thêm kết quả tìm kiếm.",
                         (Stage) tfSearch.getScene().getWindow());
@@ -149,7 +154,7 @@ public class HomeController {
             newArrivalsPage++;
             try {
                 loadMoreNewArrivals();
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 ErrorDialog.showError("Lỗi", "Không thể tải thêm sách mới.", (Stage) tfSearch.getScene().getWindow());
                 newArrivalsPage--;
@@ -173,7 +178,7 @@ public class HomeController {
                 loadMoreSearchResults();
                 scrollPaneMain.setVvalue(0);
 
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 ErrorDialog.showError("Lỗi", "Không thể tải thêm kết quả tìm kiếm.",
                         (Stage) tfSearch.getScene().getWindow());
@@ -188,7 +193,7 @@ public class HomeController {
             try {
                 loadMoreNewArrivals();
 
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 newArrivalsPage++;
                 ErrorDialog.showError("Lỗi", "Không thể tải thêm sách mới.", (Stage) tfSearch.getScene().getWindow());
@@ -204,7 +209,7 @@ public class HomeController {
         lblCurrentPage.setText(String.valueOf(currentPage + 1));
     }
 
-    private void loadMoreSearchResults() throws SQLException {
+    private void loadMoreSearchResults() throws Exception  {
     List<Document> searchResults = homeService.search(currentSearchText, searchPage, PAGE_SIZE_SEARCH);
 
         if (searchResults.isEmpty()) {
@@ -219,7 +224,7 @@ public class HomeController {
         });
     }
 
-    private void loadMoreNewArrivals() throws SQLException {
+    private void loadMoreNewArrivals() throws Exception {
     List<Document> newArrivals = homeService.getNewArrivals(newArrivalsPage, PAGE_SIZE);
         if (newArrivals.isEmpty()) {
             throw new SQLException("No more new arrivals to load.");
@@ -312,8 +317,10 @@ public class HomeController {
             loadMoreSearchResults();
             scrollPaneMain.setVvalue(0);
             updateCurrentPageLabel();
-        } catch (SQLException e) {
+        } catch (Exception e) {
+
             e.printStackTrace();
+            ErrorDialog.showError("Lỗi", e.getMessage() != null ? e.getMessage() : e.toString(), (Stage) tfSearch.getScene().getWindow());
             // Handle the exception appropriately (e.g., show an error message to the user)
         }
     }
@@ -347,34 +354,49 @@ public class HomeController {
 
     @FXML
     public void handleReload() {
-        // Clear only book-related cache and reuse the initial load routine
-        service.AppCache.getInstance().clearBookCache();
-        scrollPaneMain.setContent(initialContent);
-        isSearching = false;
-        tfSearch.clear();
+        try {
+            // Clear only book-related cache and reuse the initial load routine
+            service.AppCache.getInstance().clearBookCache();
+            scrollPaneMain.setContent(initialContent);
+            isSearching = false;
+            tfSearch.clear();
 
-        // Ensure sections are visible
-        topBooksSection.setVisible(true);
-        topBooksSection.setManaged(true);
-        recommendedBooksSection.setVisible(true);
-        recommendedBooksSection.setManaged(true);
-        trendingBooksSection.setVisible(true);
-        trendingBooksSection.setManaged(true);
+            // Ensure sections are visible
+            topBooksSection.setVisible(true);
+            topBooksSection.setManaged(true);
+            recommendedBooksSection.setVisible(true);
+            recommendedBooksSection.setManaged(true);
+            trendingBooksSection.setVisible(true);
+            trendingBooksSection.setManaged(true);
 
-        // Reset paging and reload content via helper
-        fpNewArrivals.getChildren().clear();
-        newArrivalsPage = 0;
-        updateCurrentPageLabel();
-        loadInitialContent();
-        scrollPaneMain.setVvalue(0);
+            // Reset paging and reload content via helper
+            fpNewArrivals.getChildren().clear();
+            newArrivalsPage = 0;
+            updateCurrentPageLabel();
+            loadInitialContent();
+            scrollPaneMain.setVvalue(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorDialog.showError("Lỗi", e.getMessage() != null ? e.getMessage() : e.toString(), null);
+        }
     }
 
     public void reload() {
-        handleReload();
+        try {
+            handleReload();
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorDialog.showError("Lỗi", e.getMessage() != null ? e.getMessage() : e.toString(), null);
+        }
     }
 
     public void undoDetail() {
-        scrollPaneMain.setContent(initialContent);
+        try {
+            scrollPaneMain.setContent(initialContent);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorDialog.showError("Lỗi", e.getMessage() != null ? e.getMessage() : e.toString(), null);
+        }
     }
 
     public void openBookDetailTab(Document book) {
@@ -397,6 +419,11 @@ public class HomeController {
 
     @FXML
     private void handleBack() {
-        undoDetail();
+        try {
+            undoDetail();
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorDialog.showError("Lỗi", e.getMessage() != null ? e.getMessage() : e.toString(), null);
+        }
     }
 }

@@ -72,9 +72,7 @@ public class MyAccountController {
                 userIcon.setImage(new Image(QR.CreateQRCode.generateQRCode("accountID: " + accountID)));
             }
 
-        } catch (SQLException e) {
-            ErrorDialog.showError("SQL Error", e.getMessage(), null);
-            e.printStackTrace();
+        
         } catch (WriterException | IOException e) {
             ErrorDialog.showError("Error", e.getMessage(), null);
             e.printStackTrace();
@@ -143,9 +141,6 @@ public class MyAccountController {
             } else {
                 menuController.getInstance().handleReload();
             }
-        } catch (SQLException e) {
-            ErrorDialog.showError("SQL Error", e.getMessage(), (Stage) fullnameField.getScene().getWindow());
-            e.printStackTrace();
         } catch (IllegalArgumentException e) {
             ErrorDialog.showError("Error", e.getMessage(), (Stage) fullnameField.getScene().getWindow());
             e.printStackTrace();
@@ -155,15 +150,25 @@ public class MyAccountController {
 
     @FXML
     private void handleCancel() {
-        fullnameField.clear();
-        phoneField.clear();
-        emailField.clear();
-        passwordField.clear();
-        confirmPasswordField.clear();
-        initialize();
+        try {
+            fullnameField.clear();
+            phoneField.clear();
+            emailField.clear();
+            passwordField.clear();
+            confirmPasswordField.clear();
+            initialize();
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorDialog.showError("Lỗi", e.getMessage() != null ? e.getMessage() : e.toString(), null);
+        }
     }
 
     public void handleReload() {
-        handleCancel();
+        try {
+            handleCancel();
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorDialog.showError("Lỗi", e.getMessage() != null ? e.getMessage() : e.toString(), null);
+        }
     }
 }
