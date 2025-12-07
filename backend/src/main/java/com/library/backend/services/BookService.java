@@ -15,6 +15,8 @@ import com.library.backend.repositories.StudentRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,8 +38,8 @@ public class BookService {
     StudentRepository studentRepository;
     BorrowRepository borrowRepository;
     BookMapper bookMapper;
-    RedisTemplate<String, Object> redisTemplate;
-
+//    RedisTemplate<String, Object> redisTemplate;
+    RedissonClient redissonClient;
     String TRENDING_KEY = "trending_book_ids";
     int CACHE_LIMIT = 100; // cache top 100 book IDs
     long CACHE_TTL_MINUTES = 60;
@@ -139,8 +141,10 @@ public class BookService {
     }
 
     public List<BookDetailResponse> getTrending(int limit) {
-        List<Integer> cachedIds = (List<Integer>) redisTemplate.opsForValue().get(TRENDING_KEY);
+//        List<Integer> cachedIds = (List<Integer>) redisTemplate.opsForValue().get(TRENDING_KEY);
 
+        RBucket<List<Integer>> bucket = redissonClient.getBucket(TRENDING_KEY);
+        List<Integer> cachedIds = bucket.get();
         // 2️⃣ Nếu cache có, dùng luôn
         if (cachedIds != null && !cachedIds.isEmpty()) {
             List<Integer> topIds = cachedIds.stream()
@@ -205,7 +209,9 @@ public class BookService {
                 .map(Book::getId)
                 .toList();
 
-        redisTemplate.opsForValue().set(TRENDING_KEY, topIds, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        RBucket<List<Integer>> bucket2 = redissonClient.getBucket(TRENDING_KEY);
+        bucket2.set(topIds, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+//        redisTemplate.opsForValue().set(TRENDING_KEY, topIds, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
 
         // Trả về theo limit
         return sortedBooks.stream()

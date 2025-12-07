@@ -34,6 +34,7 @@ public class BorrowService {
     StudentRepository studentRepository;
     ReturnRepository returnRepository;
     ReturnMapper returnMapper;
+    MailProducer emailProducer;
 
     public List<BorrowDetailResponse> getAll() {
         List<Borrow> borrows = borrowRepository.findAll();
@@ -61,6 +62,12 @@ public class BorrowService {
         borrow.setBorrowDate(LocalDate.now());
         borrow.setStatus(Borrow.Type.Borrowed);
         borrow = borrowRepository.save(borrow);
+
+        String to = student.getUser().getEmail();
+        String subject = "Thông báo mượn sách";
+        String content = "Bạn đã mượn sách: " + book.getTitle() + " vào ngày " + borrow.getBorrowDate();
+        emailProducer.sendEmailMessage(to, subject, content);
+
         return borrowMapper.toBorrowDetailResponse(borrow);
     }
 
@@ -120,6 +127,7 @@ public class BorrowService {
     }
 
     public boolean isBorrowed(Integer studentId, Integer bookId) {
+        System.out.println(1);
         return borrowRepository.existsByStudentUserIdAndBookIdAndStatus(studentId, bookId, Borrow.Type.Borrowed);
     }
 

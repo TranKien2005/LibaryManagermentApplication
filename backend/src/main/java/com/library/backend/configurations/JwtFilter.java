@@ -63,7 +63,9 @@ public class JwtFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
+            System.out.println("token:" + token);
             if (jwtUtil.verifyToken(token)) {
+                System.out.println("not valid");
                 JWTClaimsSet jwtClaimsSet = jwtUtil.getClaimSetFromToken(token);
                 Long userId = null;
                 try {

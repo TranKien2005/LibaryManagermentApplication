@@ -18,54 +18,41 @@ spring:
   redis:
     host: ${SPRING_REDIS_HOST}
     port: ${SPRING_REDIS_PORT}
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: email-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 throttling:
   limit: 100
   duration: 10
   base-delay: 100
+
 jwt:
   signerKey: ${JWT_KEY}
   accessToken:
     expirationTime: 1800
   refreshToken:
     expirationTime: 604800
-# redisson:
-#   singleServerConfig:
-#     address: "redis://${SPRING_REDIS_HOST}:${SPRING_REDIS_PORT}"
-#     connectionMinimumIdleSize: 2
-#     connectionPoolSize: 10
-
 
 app:
- cors:
-   allowed-origins: "*"
-
-
-#app:
-# cors:
-#   allowed-origins: "*"
-#server:
-# port: 8080
-# servlet:
-#   context-path: /api
-#
-#spring:
-# datasource:
-#   url: jdbc:mysql://localhost:3306/librarymanagement
-#   username: root
-#   password: 123456
-# jpa:
-#   hibernate:
-#     ddl-auto: update
-#   show-sql: true
-#   properties:
-#     hibernate:
-#       format_sql: true
-#jwt:
-#  # NOTE: HS512 requires a strong secret (recommended >= 64 bytes).
-#  # This value is a 128-hex-char string (64 bytes) used for HMAC signing.
-#  signerKey: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-#  accessToken:
-#    expirationTime: 1800
-#  refreshToken:
-#    expirationTime: 604800
-
+  cors:
+    allowed-origins: "*"

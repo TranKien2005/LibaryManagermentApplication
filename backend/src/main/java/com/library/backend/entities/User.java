@@ -10,7 +10,7 @@ import java.net.IDN;
 @Table(
         name = "users",
         indexes = {
-                @Index(name = "idx_user_username", columnList = "username")
+                @Index(name = "idx_users_username", columnList = "phone")
         }
 )
 @Data
