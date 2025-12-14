@@ -3,7 +3,7 @@ package com.library.backend.services;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-//import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,9 +13,11 @@ public class MailConsumer {
 
     MailService emailService;
 
-//    @KafkaListener(topics = "email-topic", groupId = "email-group")
+    @KafkaListener(topics = "email-topic", groupId = "email-group")
     public void consume(String message) {
         try {
+            System.out.println("from mail consumer");
+            System.out.println(message);
             String[] parts = message.split("\\|", 3);
             String to = parts[0];
             String subject = parts[1];

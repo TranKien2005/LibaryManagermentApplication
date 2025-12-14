@@ -26,7 +26,7 @@ public class SecurityConfig {
 
     static String[] PUBLIC_POST_ENDPOINTS = {
             "/users",
-            "/accounts",
+            "/accounts/register",
             "/auth/**",
             "/accounts/get-id"
     };

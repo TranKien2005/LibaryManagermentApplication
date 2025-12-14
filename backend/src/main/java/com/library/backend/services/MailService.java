@@ -19,7 +19,7 @@ public class MailService {
         message.setTo(to);
         message.setSubject(subject);
         message.setText(content);
-        message.setFrom("your_email@gmail.com");
+        message.setFrom("minhquan15032005@gmail.com");
 
         mailSender.send(message);
     }

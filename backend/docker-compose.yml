@@ -26,35 +26,35 @@ services:
     networks:
       - sa-library-net
 
-#  zookeeper:
-#    image: confluentinc/cp-zookeeper:7.5.0
-#    container_name: sa-library-zookeeper
-#    environment:
-#      ZOOKEEPER_CLIENT_PORT: 2181
-#      ZOOKEEPER_TICK_TIME: 2000
-#    ports:
-#      - "2181:2181"
-#    restart: unless-stopped
-#    networks:
-#      - sa-library-net
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: sa-library-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    restart: unless-stopped
+    networks:
+      - sa-library-net
 #
-#  kafka:
-#    image: confluentinc/cp-kafka:7.5.0
-#    container_name: sa-library-kafka
-#    depends_on:
-#      - zookeeper
-#    ports:
-#      - "9092:9092"
-#    environment:
-#      KAFKA_BROKER_ID: 1
-#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
-#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-#      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-#    restart: unless-stopped
-#    networks:
-#      - sa-library-net
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: sa-library-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    restart: unless-stopped
+    networks:
+      - sa-library-net
 
   backend:
     build:
@@ -68,7 +68,7 @@ services:
     depends_on:
       - postgres
       - redis
-#      - kafka
+      - kafka
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
