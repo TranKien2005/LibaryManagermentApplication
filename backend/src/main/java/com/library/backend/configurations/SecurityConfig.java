@@ -28,7 +28,8 @@ public class SecurityConfig {
             "/users",
             "/accounts/register",
             "/auth/**",
-            "/accounts/get-id"
+            "/accounts/get-id",
+            "/accounts"
     };
 
     JwtFilter jwtFilter;

@@ -32,9 +32,13 @@ public class JwtFilter extends OncePerRequestFilter {
     private boolean isPublicEndpoint(HttpServletRequest request) {
         String path = request.getServletPath();
         String method = request.getMethod();
+        System.out.println((path));
 
         if ("GET".equalsIgnoreCase(method)) {
             for (String endpoint : SecurityConfig.PUBLIC_GET_ENDPOINTS) {
+                if (path.contains(endpoint)) {
+                    return true;
+                }
                 String regex = endpoint
                         .replace("**", ".*")        // match mọi cấp
                         .replace("*", "[^/]+");     // match 1 cấp
@@ -44,6 +48,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if ("POST".equalsIgnoreCase(method)) {
             for (String endpoint : SecurityConfig.PUBLIC_POST_ENDPOINTS) {
+                if (path.contains(endpoint)) {
+                    return  true;
+                }
                 String regex = endpoint
                         .replace("**", ".*")
                         .replace("*", "[^/]+");
