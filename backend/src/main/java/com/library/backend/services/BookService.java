@@ -15,12 +15,18 @@ import com.library.backend.repositories.StudentRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +38,11 @@ public class BookService {
     StudentRepository studentRepository;
     BorrowRepository borrowRepository;
     BookMapper bookMapper;
+//    RedisTemplate<String, Object> redisTemplate;
+    RedissonClient redissonClient;
+    String TRENDING_KEY = "trending_book_ids";
+    int CACHE_LIMIT = 100; // cache top 100 book IDs
+    long CACHE_TTL_MINUTES = 60;
 
     public List<BookDetailResponse> getAll() {
         List<Book> books = bookRepository.findAll();
@@ -130,24 +141,101 @@ public class BookService {
     }
 
     public List<BookDetailResponse> getTrending(int limit) {
+//        List<Integer> cachedIds = (List<Integer>) redisTemplate.opsForValue().get(TRENDING_KEY);
+
+        RBucket<List<Integer>> bucket = redissonClient.getBucket(TRENDING_KEY);
+        List<Integer> cachedIds = bucket.get();
+        // 2️⃣ Nếu cache có, dùng luôn
+        if (cachedIds != null && !cachedIds.isEmpty()) {
+            List<Integer> topIds = cachedIds.stream()
+                    .limit(Math.min(limit, CACHE_LIMIT))
+                    .toList();
+
+            // Lấy các book trong top 100
+            List<Book> cachedBooks = bookRepository.findAllById(topIds);
+
+            // Giữ đúng thứ tự
+            Map<Integer, Book> bookMap = cachedBooks.stream()
+                    .collect(Collectors.toMap(Book::getId, b -> b));
+
+            List<Book> orderedTopBooks = topIds.stream()
+                    .map(bookMap::get)
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            // 3️⃣ Nếu limit <= 100 → done luôn
+            if (limit <= CACHE_LIMIT) {
+                return orderedTopBooks.stream()
+                        .map(bookMapper::toBookDetailResponse)
+                        .toList();
+            }
+
+            // 4️⃣ Nếu limit > 100 → lấy thêm ngoài cache
+            int extraLimit = limit - CACHE_LIMIT;
+            List<Integer> cachedSet = new ArrayList<>(cachedIds);
+
+            List<Book> extraBooks = bookRepository.findByIdNotInOrderByRatingDesc(cachedSet, PageRequest.of(0, extraLimit));
+
+            // Gộp lại (top + extra)
+            List<Book> result = new ArrayList<>();
+            result.addAll(orderedTopBooks);
+            result.addAll(extraBooks);
+
+            return result.stream().map(bookMapper::toBookDetailResponse).toList();
+        }
+
+        // 5️⃣ Cache chưa có → tính toán lại
         LocalDate oneMonthAgo = LocalDate.now().minusMonths(1);
         List<Book> books = bookRepository.findAll();
         List<Borrow> recentBorrows = borrowRepository.findByBorrowDateAfter(oneMonthAgo);
+
         Map<Integer, Long> borrowCountMap = recentBorrows.stream()
                 .collect(Collectors.groupingBy(b -> b.getBook().getId(), Collectors.counting()));
-        books = books.stream()
+
+        List<Book> sortedBooks = books.stream()
                 .sorted((b1, b2) -> {
                     long count1 = borrowCountMap.getOrDefault(b1.getId(), 0L);
                     long count2 = borrowCountMap.getOrDefault(b2.getId(), 0L);
 
-                    if (count1 != count2) {
+                    if (count1 != count2)
                         return Long.compare(count2, count1); // borrow_count desc
-                    }
                     return Double.compare(b2.getRating(), b1.getRating()); // rating desc
                 })
-                .limit(limit)
                 .toList();
-        return books.stream().map(bookMapper::toBookDetailResponse).toList();
+
+        // Cache top 100 IDs
+        List<Integer> topIds = sortedBooks.stream()
+                .limit(CACHE_LIMIT)
+                .map(Book::getId)
+                .toList();
+
+        RBucket<List<Integer>> bucket2 = redissonClient.getBucket(TRENDING_KEY);
+        bucket2.set(topIds, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+//        redisTemplate.opsForValue().set(TRENDING_KEY, topIds, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+
+        // Trả về theo limit
+        return sortedBooks.stream()
+                .limit(limit)
+                .map(bookMapper::toBookDetailResponse)
+                .toList();
+//        LocalDate oneMonthAgo = LocalDate.now().minusMonths(1);
+//        List<Book> books = bookRepository.findAll();
+//        List<Borrow> recentBorrows = borrowRepository.findByBorrowDateAfter(oneMonthAgo);
+//        Map<Integer, Long> borrowCountMap = recentBorrows.stream()
+//                .collect(Collectors.groupingBy(b -> b.getBook().getId(), Collectors.counting()));
+//        books = books.stream()
+//                .sorted((b1, b2) -> {
+//                    long count1 = borrowCountMap.getOrDefault(b1.getId(), 0L);
+//                    long count2 = borrowCountMap.getOrDefault(b2.getId(), 0L);
+//
+//                    if (count1 != count2) {
+//                        return Long.compare(count2, count1); // borrow_count desc
+//                    }
+//                    return Double.compare(b2.getRating(), b1.getRating()); // rating desc
+//                })
+//                .limit(limit)
+//                .toList();
+//        return books.stream().map(bookMapper::toBookDetailResponse).toList();
     }
 
     public List<BookDetailResponse> search(String key, int page, int pageSize) {

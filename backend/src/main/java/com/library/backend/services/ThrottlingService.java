@@ -37,7 +37,7 @@ public class ThrottlingService {
         long now = System.currentTimeMillis();
         for (int i = timestamps.size() - 1; i >= 0; i--) {
             Long t = timestamps.get(i);
-            if (t < now - duration * 1000L) {
+            if (t == null || t < now - duration * 1000L) {
                 timestamps.remove(i);
             }
         }

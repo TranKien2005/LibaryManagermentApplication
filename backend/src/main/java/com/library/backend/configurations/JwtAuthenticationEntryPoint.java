@@ -25,5 +25,6 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.getWriter().write(mapper.writeValueAsString(apiResponse));
         response.flushBuffer();
         System.out.println("auth entry point");
+        System.out.println("Unauthorized request to: " + request.getRequestURI());
     }
 }

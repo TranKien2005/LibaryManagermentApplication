@@ -4,6 +4,30 @@ server:
     context-path: /api
 
 spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: my-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      max-poll-records: 10      # giảm số message mỗi lần poll
+      fetch-max-bytes: 1048576
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: minhquan15032005@gmail.com
+    password: ${MAIL_PASSWORD}
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -19,7 +43,7 @@ spring:
     host: ${SPRING_REDIS_HOST}
     port: ${SPRING_REDIS_PORT}
 throttling:
-  limit: 10
+  limit: 50
   duration: 10
   base-delay: 200
 jwt:

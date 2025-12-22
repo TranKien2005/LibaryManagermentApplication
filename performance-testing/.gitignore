@@ -1,0 +1,15 @@
+# Ignore test results
+results/
+*.jtl
+*.log
+
+# JMeter
+jmeter.log
+*.csv
+
+# K6
+summary.json
+
+# Temporary files
+*.tmp
+*.bak

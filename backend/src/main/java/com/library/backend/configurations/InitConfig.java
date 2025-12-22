@@ -46,200 +46,106 @@ public class InitConfig {
             List<BookDetailResponse> books = new ArrayList<>();
             List<BorrowDetailResponse> borrows = new ArrayList<>();
             List<ReturnDetailResponse> returns = new ArrayList<>();
+
+            // --- Users ---
             if (!userService.isInit()) {
-                System.out.println("Init user");
-                List<UserCreationRequest> requests = List.of(
-                        new UserCreationRequest("user1", "pass123", "Nguyen Van A", "a@example.com", "0901000001"),
-                        new UserCreationRequest("user2", "pass234", "Tran Thi B", "b@example.com", "0901000002"),
-                        new UserCreationRequest("user3", "pass345", "Le Van C", "c@example.com", "0901000003"),
-                        new UserCreationRequest("user4", "pass456", "Pham Thi D", "d@example.com", "0901000004"),
-                        new UserCreationRequest("user5", "pass567", "Hoang Van E", "e@example.com", "0901000005")
-                );
-                for (UserCreationRequest request:requests) {
-                    users.add(userService.create(request));
+                System.out.println("Init 100000 users");
+                for (int i = 1; i <= 100000; i++) {
+                    String username = "user_number_" + i;
+                    String password = "pass_number_" + i;
+                    String name = "Nguyen Van " + i;
+                    String email = "user" + i + "@example.com";
+                    String phone = "0901" + String.format("%06d", i);
+                    UserCreationRequest req = new UserCreationRequest(username, password, name, email, phone);
+                    users.add(userService.create(req));
                 }
-            }
-            else {
+            } else {
                 System.out.println("Fetch user");
                 users = userService.init_getAll();
             }
+
+            // --- Managers ---
             if (!managerService.isInit()) {
-                System.out.println("Init manager");
-                for (int i = 0; i < 2; i++) {
-                    managers.add(managerService.init_create(ManagerCreationRequest.builder().userId(users.get(i).getId()).build()));
+                System.out.println("Init 10 managers");
+                for (int i = 0; i < 10; i++) {
+                    managers.add(managerService.init_create(
+                            ManagerCreationRequest.builder().userId(users.get(i).getId()).build()
+                    ));
                 }
-            }
-            else {
+            } else {
                 System.out.println("Fetch manager");
                 managers = managerService.init_getAll();
             }
+
+            // --- Students ---
             if (!studentService.isInit()) {
-                System.out.println("Init student");
-                for (int i = 2; i < users.size(); i++) {
-                    students.add(studentService.init_create(StudentCreationRequest.builder().userId(users.get(i).getId()).build()));
+                System.out.println("Init students");
+                for (int i = 10; i < users.size(); i++) { // phần còn lại là học sinh
+                    students.add(studentService.init_create(
+                            StudentCreationRequest.builder().userId(users.get(i).getId()).build()
+                    ));
                 }
-            }
-            else {
+            } else {
                 System.out.println("Fetch student");
                 students = studentService.init_getAll();
             }
+
+            // --- Books ---
             if (!bookService.isInit()) {
-                System.out.println("Init book");
-                List<BookCreationRequest> requests = List.of(
-                        new BookCreationRequest(
-                                "Lập trình Java từ cơ bản đến nâng cao",
-                                "Nguyen Van A",
-                                "Công nghệ thông tin",
-                                "NXB Trẻ",
-                                2020,
-                                5,
-                                "Sách hướng dẫn chi tiết lập trình Java.",
-                                "https://book.sachgiai.com/uploads/book/sach-giao-khoa-tieng-viet-1-tap-1/tieng-viet-1-tap-1-0.jpg"
-                        ),
-                        new BookCreationRequest(
-                                "Học Python hiệu quả",
-                                "Tran Thi B",
-                                "Công nghệ thông tin",
-                                "NXB Giáo dục",
-                                2021,
-                                3,
-                                "Học Python nhanh chóng và thực hành nhiều bài tập.",
-                                "https://book.sachgiai.com/uploads/book/sach-giao-khoa-tieng-viet-1-tap-1/tieng-viet-1-tap-1-0.jpg"
-                        ),
-                        new BookCreationRequest(
-                                "Cấu trúc dữ liệu và giải thuật",
-                                "Le Van C",
-                                "Công nghệ thông tin",
-                                "NXB Khoa học",
-                                2019,
-                                4,
-                                "Giải thích các cấu trúc dữ liệu và thuật toán cơ bản.",
-                                "https://book.sachgiai.com/uploads/book/sach-giao-khoa-tieng-viet-1-tap-1/tieng-viet-1-tap-1-0.jpg"
-                        ),
-                        new BookCreationRequest(
-                                "Thiết kế Web với HTML & CSS",
-                                "Pham Thi D",
-                                "Web Development",
-                                "NXB Trẻ",
-                                2022,
-                                6,
-                                "Hướng dẫn thiết kế giao diện web chuyên nghiệp.",
-                                "https://book.sachgiai.com/uploads/book/sach-giao-khoa-tieng-viet-1-tap-1/tieng-viet-1-tap-1-0.jpg"
-                        ),
-                        new BookCreationRequest(
-                                "Machine Learning căn bản",
-                                "Hoang Van E",
-                                "AI & Machine Learning",
-                                "NXB Giáo dục",
-                                2023,
-                                2,
-                                "Giới thiệu các khái niệm cơ bản về Machine Learning.",
-                                "https://book.sachgiai.com/uploads/book/sach-giao-khoa-tieng-viet-1-tap-1/tieng-viet-1-tap-1-0.jpg"
-                        )
-                );
-                for (BookCreationRequest request:requests) {
-                    books.add(bookService.init_create(request));
+                System.out.println("Init 10.000 books");
+                String[] categories = {"Công nghệ thông tin", "Web Development", "AI & Machine Learning", "Database", "Mobile Development"};
+                String cover = "https://book.sachgiai.com/uploads/book/default.jpg";
+
+                for (int i = 1; i <= 10000; i++) {
+                    String title = "Book " + i;
+                    String author = "Author " + (i % 1000 + 1); // lặp tác giả cho 1000 user
+                    String category = categories[i % categories.length];
+                    String publisher = "NXB " + (i % 50 + 1); // 50 nhà xuất bản khác nhau
+                    int year = 2000 + (i % 24);
+                    int quantity = 1 + (i % 10);
+                    String description = "Mô tả sách " + i;
+
+                    BookCreationRequest req = new BookCreationRequest(title, author, category, publisher, year, quantity, description, cover);
+                    books.add(bookService.init_create(req));
                 }
-            }
-            else {
+            } else {
                 System.out.println("Fetch book");
                 books = bookService.init_getAll();
             }
-            if (!borrowService.isInit()) {
-                System.out.println("Init borrow");
-                List<BorrowCreationRequest> requests = List.of(
-                        BorrowCreationRequest.builder()
-                                .studentId(students.get(0).getId())
-                                .bookId(books.get(0).getId())
-                                .expectedReturnDate(LocalDate.now().plusDays(7))
-                                .build(),
-                        BorrowCreationRequest.builder()
-                                .studentId(students.get(0).getId())
-                                .bookId(books.get(1).getId())
-                                .expectedReturnDate(LocalDate.now().plusDays(10))
-                                .build(),
-                        BorrowCreationRequest.builder()
-                                .studentId(students.get(1).getId())
-                                .bookId(books.get(2).getId())
-                                .expectedReturnDate(LocalDate.now().plusDays(8))
-                                .build(),
-                        BorrowCreationRequest.builder()
-                                .studentId(students.get(1).getId())
-                                .bookId(books.get(3).getId())
-                                .expectedReturnDate(LocalDate.now().plusDays(12))
-                                .build(),
-                        BorrowCreationRequest.builder()
-                                .studentId(students.get(2).getId())
-                                .bookId(books.get(4).getId())
-                                .expectedReturnDate(LocalDate.now().plusDays(9))
-                                .build(),
-                        BorrowCreationRequest.builder()
-                                .studentId(students.get(2).getId())
-                                .bookId(books.get(0).getId())
-                                .expectedReturnDate(LocalDate.now().plusDays(11))
-                                .build(),
-                        BorrowCreationRequest.builder()
-                                .studentId(students.get(0).getId())
-                                .bookId(books.get(2).getId())
-                                .expectedReturnDate(LocalDate.now().plusDays(14))
-                                .build(),
-                        BorrowCreationRequest.builder()
-                                .studentId(students.get(1).getId())
-                                .bookId(books.get(1).getId())
-                                .expectedReturnDate(LocalDate.now().plusDays(13))
-                                .build(),
-                        BorrowCreationRequest.builder()
-                                .studentId(students.get(2).getId())
-                                .bookId(books.get(3).getId())
-                                .expectedReturnDate(LocalDate.now().plusDays(15))
-                                .build(),
-                        BorrowCreationRequest.builder()
-                                .studentId(students.get(0).getId())
-                                .bookId(books.get(4).getId())
-                                .expectedReturnDate(LocalDate.now().plusDays(16))
-                                .build()
-                );
 
-                for (BorrowCreationRequest request : requests) {
-                    borrows.add(borrowService.init_create(request));
+            // --- Borrows ---
+            if (!borrowService.isInit()) {
+                System.out.println("Init borrows");
+                int borrowCount = Math.min(students.size(), books.size());
+                for (int i = 0; i < borrowCount; i++) {
+                    BorrowCreationRequest req = BorrowCreationRequest.builder()
+                            .studentId(students.get(i % students.size()).getId())
+                            .bookId(books.get(i % books.size()).getId())
+                            .expectedReturnDate(LocalDate.now().plusDays(7 + i % 30))
+                            .build();
+                    borrows.add(borrowService.init_create(req));
                 }
-            }
-            else {
+            } else {
                 System.out.println("Fetch borrow");
                 borrows = borrowService.init_getAll();
             }
+
+            // --- Returns ---
             if (!returnService.isInit()) {
-                List<ReturnCreationRequest> returnRequests = List.of(
-                        ReturnCreationRequest.builder()
-                                .borrowId(borrows.get(0).getId())
-                                .damagePercentage(0)
-                                .build(),
-                        ReturnCreationRequest.builder()
-                                .borrowId(borrows.get(1).getId())
-                                .damagePercentage(10)
-                                .build(),
-                        ReturnCreationRequest.builder()
-                                .borrowId(borrows.get(2).getId())
-                                .damagePercentage(0)
-                                .build(),
-                        ReturnCreationRequest.builder()
-                                .borrowId(borrows.get(3).getId())
-                                .damagePercentage(5)
-                                .build(),
-                        ReturnCreationRequest.builder()
-                                .borrowId(borrows.get(4).getId())
-                                .damagePercentage(0)
-                                .build()
-                );
-                for (ReturnCreationRequest request : returnRequests) {
-                    returns.add(returnService.init_create(request));
+                System.out.println("Init returns");
+                for (int i = 0; i < borrows.size(); i++) {
+                    ReturnCreationRequest req = ReturnCreationRequest.builder()
+                            .borrowId(borrows.get(i).getId())
+                            .damagePercentage(i % 10 == 0 ? 0 : (i % 5) * 5)
+                            .build();
+                    returns.add(returnService.init_create(req));
                 }
-            }
-            else {
-                System.out.println("Fetch borrow");
+            } else {
+                System.out.println("Fetch return");
                 returns = returnService.init_getAll();
             }
         }
+
     }
 
 

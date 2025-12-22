@@ -1,0 +1,21 @@
+target/
+*.class
+*.log
+*.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# NetBeans
+nbproject/
+
+# VS Code
+.vscode/

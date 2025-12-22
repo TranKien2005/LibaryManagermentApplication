@@ -100,6 +100,7 @@ public class V1BorrowReturnController {
             @RequestParam Integer bookId
     ) {
         Boolean out = borrowService.isBorrowed(accountId, bookId);
+        System.out.println(out);
         return ResponseEntity.ok().body(ApiResponse.success(out));
     }
 

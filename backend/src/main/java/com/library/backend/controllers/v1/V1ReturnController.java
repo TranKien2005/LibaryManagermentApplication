@@ -44,10 +44,12 @@ public class V1ReturnController {
     ResponseEntity<ApiResponse<Void>> insert(
             @RequestBody Map<String, Object> request
     ) {
+        System.out.println(request);
         ReturnCreationRequest returnCreationRequest = ReturnCreationRequest.builder()
                 .borrowId((Integer) request.get("borrowID"))
                 .damagePercentage((Integer) request.get("damagePercentage"))
                 .build();
+        System.out.println(returnCreationRequest);
         ReturnDetailResponse response = returnService.create(returnCreationRequest);
         return ResponseEntity.ok().body(ApiResponse.success(null));
     }

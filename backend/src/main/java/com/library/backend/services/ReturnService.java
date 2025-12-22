@@ -38,20 +38,29 @@ public class ReturnService {
     }
 
     public ReturnDetailResponse create(ReturnCreationRequest request) {
+        System.out.println(1);
         Borrow borrow = borrowRepository.findById(request.getBorrowId())
                 .orElseThrow(() -> new GeneralException(ResponseCode.BORROW_NOT_FOUND));
+        System.out.println(2);
         borrow.setStatus(Borrow.Type.Returned);
+        System.out.println(3);
         borrowRepository.save(borrow);
+        System.out.println(4);
         Book book = bookRepository.findById(borrow.getBook().getId())
                 .orElseThrow(() -> new GeneralException(ResponseCode.BOOK_NOT_FOUND));
+        System.out.println(5);
         book.setAvailableCopies(book.getAvailableCopies() + 1);
+        System.out.println(6);
         bookRepository.save(book);
+        System.out.println(7);
         Return r = returnMapper.toReturn(request);
+        System.out.println(8);
         r.setReturnDate(LocalDate.now());
         r.setBorrow(borrow);
         r.setReturnDate(LocalDate.now());
         r.setDamagePercentage(0);
         r = returnRepository.save(r);
+        System.out.println(9);
         return returnMapper.toReturnDetailResponse(r);
     }
 
